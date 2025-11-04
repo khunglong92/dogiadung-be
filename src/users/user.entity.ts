@@ -24,9 +24,18 @@ export class User {
   @Column()
   role: UserRole;
 
+  @Column({ type: 'date', nullable: true })
+  dateOfBirth?: string | null;
+
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  avtUrl?: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', name: 'deleted_at', nullable: true })
+  deletedAt?: Date | null;
 }

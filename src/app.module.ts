@@ -4,6 +4,11 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ProductsModule } from './products/products.module';
+import { UploadModule } from './upload/upload.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ForceDeleteController } from './admin/force-delete.controller';
 
 @Module({
   imports: [
@@ -19,8 +24,11 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    CategoriesModule,
+    ProductsModule,
+    UploadModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ForceDeleteController],
   providers: [AppService],
 })
 export class AppModule {}

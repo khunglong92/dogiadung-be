@@ -2,19 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as dotenv from 'dotenv';
-import { LoginDto } from './dto/login.dto';
+import { UsersService } from 'src/users/users.service';
 dotenv.config();
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private readonly usersService: UsersService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET || 'SECRET_KEY',
     });
   }
 
-  validate(payload: LoginDto) {
-    return { userId: payload.email, email: payload.password };
+  async validate(payload: { sub: string; email: string }) {
+    // Prefer tìm full user theo email
+    const user = await this.usersService.findByEmail(payload.email);
+    if (!user) {
+      // fallback map theo payload
+      return { userId: payload.sub, email: payload.email };
+    }
+    // Remove password before attaching to request user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...safe } = user;
+    console.log('safe', safe);
+    return safe;
   }
 }

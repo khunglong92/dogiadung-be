@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { UsersService } from 'src/users/users.service';
@@ -8,19 +8,16 @@ import {
   ApiResponse,
   ApiBody,
   ApiBadRequestResponse,
-  ApiConflictResponse,
   ApiUnauthorizedResponse,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
+import { RegisterDto } from './dto/register.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import dayjs from 'dayjs';
 
 class LoginResponse {
   access_token: string;
-}
-
-class RegisterResponse {
-  id: string;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
+  refresh_token: string;
 }
 
 @ApiTags('auth')
@@ -47,8 +44,8 @@ export class AuthController {
     examples: {
       login: {
         value: {
-          email: 'user@example.com',
-          password: 'password123',
+          email: 'thienlocadmin@gmail.com',
+          password: '123123123',
         },
       },
     },
@@ -85,21 +82,28 @@ export class AuthController {
 
   /**
    * Đăng ký tài khoản mới
-   * @param body - Thông tin đăng ký
-   * @returns Thông tin người dùng vừa tạo (không bao gồm mật khẩu)
+   * @param body - Thông tin đăng ký (email, mật khẩu, tên)
+   * @returns Trả về thông tin tài khoản mới nếu đăng ký thành công
    */
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Đăng ký tài khoản',
-    description: 'Tạo tài khoản người dùng mới',
+    summary: 'Đăng ký tài khoản mới',
+    description:
+      'Tạo tài khoản người dùng mới, hash password và gửi email chào mừng.',
   })
   @ApiBody({
-    description: 'Thông tin đăng ký',
+    type: RegisterDto,
     examples: {
-      register: {
+      normalUser: {
+        summary: 'Đăng ký tài khoản USER',
         value: {
-          email: 'user@example.com',
-          password: 'password123',
+          email: 'thienlocadmin@gmail.com',
+          name: 'Thiên Lộc Admin',
+          password: '123123123',
+          role: 'ADMIN',
+          dateOfBirth: dayjs().toDate(),
+          avtUrl: 'https://picsum.photos/id/103/200/300',
         },
       },
     },
@@ -107,42 +111,88 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Đăng ký thành công',
-    type: RegisterResponse,
-  })
-  @ApiBadRequestResponse({
-    description: 'Thông tin không hợp lệ',
     schema: {
       example: {
+        id: 1,
+        email: 'thienlocadmin@gmail.com',
+        name: 'Thiên Lộc Admin',
+        role: 'USER',
+        createdAt: '2025-11-02T15:30:00.000Z',
+        updatedAt: '2025-11-02T15:30:00.000Z',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Dữ liệu không hợp lệ',
+    schema: {
+      example: {
+        statusCode: 400,
         message: [
           'email must be an email',
-          'password must be at least 6 characters',
+          'name should not be empty',
+          'password must be longer than or equal to 6 characters',
         ],
         error: 'Bad Request',
-        statusCode: 400,
       },
     },
   })
   @ApiConflictResponse({
-    description: 'Email đã tồn tại',
+    description: 'Email đã được sử dụng',
     schema: {
       example: {
-        message: 'Email đã tồn tại',
-        statusCode: 409,
+        statusCode: 400,
+        message: 'Email đã được sử dụng',
+        error: 'Bad Request',
       },
     },
   })
-  async register(@Body() body: { email: string; password: string }) {
-    const exists = await this.usersService.findByEmail(body.email);
-    if (exists) {
-      return { message: 'Email đã tồn tại' };
-    }
-    const user = await this.usersService.createUser(body.email, body.password);
-    // Explicitly type the user object to exclude password
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user as Omit<
-      typeof user,
-      'password'
-    > & { password?: string };
-    return userWithoutPassword;
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
+
+  /**
+   * Refresh token
+   * @returns access_token và refresh_token mới
+   */
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Lấy cặp token mới',
+    description:
+      'Nhận refresh_token và trả về access_token mới cùng refresh_token mới. Dùng khi access_token hết hạn.',
+  })
+  @ApiBody({
+    type: RefreshTokenDto,
+    description: 'Refresh token hợp lệ nhận được từ bước đăng nhập',
+    examples: {
+      sample: {
+        summary: 'Ví dụ request',
+        value: {
+          refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lấy cặp token mới thành công',
+    schema: {
+      example: {
+        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token không hợp lệ hoặc đã hết hạn',
+    schema: {
+      example: {
+        statusCode: 401,
+        message: 'Invalid refresh token',
+        error: 'Unauthorized',
+      },
+    },
+  })
+  refresh(@Body() body: RefreshTokenDto) {
+    return this.authService.refresh(body.refresh_token);
   }
 }
