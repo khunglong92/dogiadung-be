@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class CreateServicesTable1762156000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -6,15 +12,32 @@ export class CreateServicesTable1762156000000 implements MigrationInterface {
       new Table({
         name: 'services',
         columns: [
-          { name: 'id', type: 'uuid', isPrimary: true, isNullable: false, default: 'gen_random_uuid()' },
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            isNullable: false,
+            default: 'gen_random_uuid()',
+          },
           { name: 'name', type: 'varchar', length: '255', isNullable: false },
-          { name: 'slug', type: 'varchar', length: '255', isNullable: false, isUnique: true },
+          {
+            name: 'slug',
+            type: 'varchar',
+            length: '255',
+            isNullable: false,
+            isUnique: true,
+          },
           { name: 'parent_id', type: 'uuid', isNullable: true },
           { name: 'description', type: 'text', isNullable: true },
           { name: 'content', type: 'text', isNullable: true },
           { name: 'image', type: 'varchar', length: '512', isNullable: true },
           { name: 'order', type: 'int', isNullable: false, default: 0 },
-          { name: 'is_active', type: 'boolean', isNullable: false, default: true },
+          {
+            name: 'is_active',
+            type: 'boolean',
+            isNullable: false,
+            default: true,
+          },
           { name: 'created_at', type: 'timestamp', default: 'now()' },
           { name: 'updated_at', type: 'timestamp', default: 'now()' },
         ],
@@ -24,7 +47,10 @@ export class CreateServicesTable1762156000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'services',
-      new TableIndex({ name: 'IDX_SERVICES_PARENT', columnNames: ['parent_id'] }),
+      new TableIndex({
+        name: 'IDX_SERVICES_PARENT',
+        columnNames: ['parent_id'],
+      }),
     );
 
     await queryRunner.createForeignKey(
@@ -48,5 +74,3 @@ export class CreateServicesTable1762156000000 implements MigrationInterface {
     await queryRunner.dropTable('services');
   }
 }
-
-

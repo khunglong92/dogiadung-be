@@ -7,7 +7,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -44,7 +43,7 @@ export class CategoriesController {
     description: 'Danh sách các danh mục',
     type: [Category],
   })
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string): Promise<Category[]> {
+  findAll(): Promise<Category[]> {
     // Simple: giữ nguyên trả mảng, có thể nâng cấp phân trang sau
     return this.categoriesService.findAll();
   }

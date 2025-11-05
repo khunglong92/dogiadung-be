@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Repository, FindOptionsWhere } from 'typeorm';
 import { CompanyService } from './services.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -29,8 +29,13 @@ export class ServicesService {
   }
 
   async findAll(parentId?: string): Promise<CompanyService[]> {
-    const baseWhere: any = { deletedAt: IsNull() };
-    const where = parentId ? { ...baseWhere, parent: { id: parentId } } : baseWhere;
+    const baseWhere: FindOptionsWhere<CompanyService> = { deletedAt: IsNull() };
+    const where: FindOptionsWhere<CompanyService> = parentId
+      ? {
+          ...baseWhere,
+          parent: { id: parentId } as FindOptionsWhere<CompanyService>,
+        }
+      : baseWhere;
     return this.repo.find({
       where,
       relations: { parent: true, children: false },
@@ -39,7 +44,10 @@ export class ServicesService {
   }
 
   async findOne(id: string): Promise<CompanyService> {
-    const found = await this.repo.findOne({ where: { id, deletedAt: IsNull() }, relations: { parent: true } });
+    const found = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() },
+      relations: { parent: true },
+    });
     if (!found) throw new NotFoundException('Service not found');
     return found;
   }
@@ -67,5 +75,3 @@ export class ServicesService {
     await this.repo.save(existing);
   }
 }
-
-

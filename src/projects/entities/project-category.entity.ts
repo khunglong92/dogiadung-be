@@ -7,9 +7,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'product_categories' })
-export class ProductCategory {
-  @ApiProperty({ description: 'ID (UUID) của danh mục' })
+@Entity({ name: 'project_categories' })
+export class ProjectCategory {
+  @ApiProperty({ description: 'ID (UUID) danh mục dự án' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -25,31 +25,9 @@ export class ProductCategory {
   @Column({ type: 'text', nullable: true })
   description?: string | null;
 
-  @ApiProperty({ description: 'Sản phẩm mẫu (JSON)', required: false })
-  @Column({ type: 'jsonb', name: 'sample_products', nullable: true })
-  sampleProducts?: Array<{
-    name: string;
-    image?: string;
-    description?: string;
-  }> | null;
-
-  @ApiProperty({ description: 'Điện thoại liên hệ', required: false })
-  @Column({
-    type: 'varchar',
-    length: 50,
-    name: 'contact_phone',
-    nullable: true,
-  })
-  contactPhone?: string | null;
-
-  @ApiProperty({ description: 'Zalo liên hệ', required: false })
-  @Column({
-    type: 'varchar',
-    length: 255,
-    name: 'contact_zalo',
-    nullable: true,
-  })
-  contactZalo?: string | null;
+  @ApiProperty({ description: 'Thứ tự hiển thị', default: 0 })
+  @Column({ type: 'int', default: 0 })
+  order: number;
 
   @ApiProperty({ description: 'Kích hoạt', default: true })
   @Column({ type: 'boolean', name: 'is_active', default: true })
@@ -61,7 +39,6 @@ export class ProductCategory {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ApiProperty({ description: 'Thời điểm xoá mềm', required: false })
   @Column({ type: 'timestamp', name: 'deleted_at', nullable: true })
   deletedAt?: Date | null;
 }

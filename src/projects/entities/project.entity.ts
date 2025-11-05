@@ -4,19 +4,21 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  JoinColumn,
 } from 'typeorm';
+import { ProjectCategory } from './project-category.entity';
 
-@Entity({ name: 'services' })
-export class CompanyService {
-  @ApiProperty({ description: 'ID (UUID) của dịch vụ' })
+@Entity({ name: 'projects' })
+export class Project {
+  @ApiProperty({ description: 'ID (UUID) dự án' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ description: 'Tên dịch vụ' })
+  @ManyToOne(() => ProjectCategory, { nullable: false, onDelete: 'RESTRICT' })
+  category: ProjectCategory;
+
+  @ApiProperty({ description: 'Tên dự án' })
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
@@ -32,24 +34,29 @@ export class CompanyService {
   @Column({ type: 'text', nullable: true })
   content?: string | null;
 
+  @ApiProperty({ description: 'Địa điểm thi công', required: false })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location?: string | null;
+
+  @ApiProperty({ description: 'Ngày hoàn thành', required: false })
+  @Column({ type: 'date', name: 'completion_date', nullable: true })
+  completionDate?: string | null;
+
   @ApiProperty({ description: 'Ảnh đại diện', required: false })
   @Column({ type: 'varchar', length: 512, nullable: true })
   image?: string | null;
 
-  @ApiProperty({ description: 'Thứ tự hiển thị', default: 0 })
-  @Column({ type: 'int', default: 0 })
-  order: number;
+  @ApiProperty({ description: 'Bộ sưu tập ảnh (JSON)', required: false })
+  @Column({ type: 'jsonb', nullable: true })
+  gallery?: Array<{ url: string; caption?: string }> | null;
+
+  @ApiProperty({ description: 'Dự án tiêu biểu', default: false })
+  @Column({ type: 'boolean', name: 'is_featured', default: false })
+  isFeatured: boolean;
 
   @ApiProperty({ description: 'Kích hoạt', default: true })
-  @Column({ type: 'boolean', default: true, name: 'is_active' })
+  @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean;
-
-  @ManyToOne(() => CompanyService, (svc) => svc.children, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
-  parent?: CompanyService | null;
-
-  @OneToMany(() => CompanyService, (svc) => svc.parent)
-  children?: CompanyService[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -57,7 +64,6 @@ export class CompanyService {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ApiProperty({ description: 'Thời điểm xoá mềm', required: false })
   @Column({ type: 'timestamp', name: 'deleted_at', nullable: true })
   deletedAt?: Date | null;
 }

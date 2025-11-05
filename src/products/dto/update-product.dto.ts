@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 class UpdateProductDescriptionDto {
   @ApiPropertyOptional({ description: 'Tổng quan' })
@@ -66,11 +73,17 @@ export class UpdateProductDto {
   @MaxLength(255)
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Mô tả chi tiết', type: UpdateProductDescriptionDto })
+  @ApiPropertyOptional({
+    description: 'Mô tả chi tiết',
+    type: UpdateProductDescriptionDto,
+  })
   @IsOptional()
   description?: UpdateProductDescriptionDto;
 
-  @ApiPropertyOptional({ description: 'Thông số kỹ thuật', type: UpdateProductTechnicalSpecsDto })
+  @ApiPropertyOptional({
+    description: 'Thông số kỹ thuật',
+    type: UpdateProductTechnicalSpecsDto,
+  })
   @IsOptional()
   technicalSpecs?: UpdateProductTechnicalSpecsDto;
 
@@ -80,7 +93,10 @@ export class UpdateProductDto {
   @Min(0)
   price?: number;
 
-  @ApiPropertyOptional({ description: 'Danh sách hình ảnh URL', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Danh sách hình ảnh URL',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   images?: string[];
@@ -96,5 +112,3 @@ export class UpdateProductDto {
   @Min(1)
   categoryId?: number;
 }
-
-

@@ -1,10 +1,21 @@
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
-export class AlterProductsAddTechWarranty1762153000000 implements MigrationInterface {
+export class AlterProductsAddTechWarranty1762153000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.addColumns('products', [
-      new TableColumn({ name: 'technical_specs', type: 'text', isNullable: true }),
-      new TableColumn({ name: 'warranty_policy', type: 'varchar', length: '255', isNullable: true }),
+      new TableColumn({
+        name: 'technical_specs',
+        type: 'text',
+        isNullable: true,
+      }),
+      new TableColumn({
+        name: 'warranty_policy',
+        type: 'varchar',
+        length: '255',
+        isNullable: true,
+      }),
     ]);
   }
 
@@ -13,5 +24,3 @@ export class AlterProductsAddTechWarranty1762153000000 implements MigrationInter
     await queryRunner.dropColumn('products', 'technical_specs');
   }
 }
-
-

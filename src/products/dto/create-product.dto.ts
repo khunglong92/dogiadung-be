@@ -63,11 +63,17 @@ export class CreateProductDto {
   @MaxLength(255)
   name: string;
 
-  @ApiPropertyOptional({ description: 'Mô tả chi tiết', type: ProductDescriptionDto })
+  @ApiPropertyOptional({
+    description: 'Mô tả chi tiết',
+    type: ProductDescriptionDto,
+  })
   @IsOptional()
   description?: ProductDescriptionDto;
 
-  @ApiPropertyOptional({ description: 'Thông số kỹ thuật', type: ProductTechnicalSpecsDto })
+  @ApiPropertyOptional({
+    description: 'Thông số kỹ thuật',
+    type: ProductTechnicalSpecsDto,
+  })
   @IsOptional()
   technicalSpecs?: ProductTechnicalSpecsDto;
 
@@ -77,7 +83,10 @@ export class CreateProductDto {
   @Min(0)
   price?: number;
 
-  @ApiPropertyOptional({ description: 'Danh sách hình ảnh URL', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Danh sách hình ảnh URL',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   images?: string[];
@@ -92,5 +101,3 @@ export class CreateProductDto {
   @Min(1)
   categoryId: number;
 }
-
-

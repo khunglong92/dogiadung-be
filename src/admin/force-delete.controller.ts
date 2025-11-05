@@ -1,5 +1,11 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../categories/category.entity';
@@ -15,8 +21,10 @@ class ForceDeleteDto {
 @Controller('admin')
 export class ForceDeleteController {
   constructor(
-    @InjectRepository(Category) private readonly categoryRepo: Repository<Category>,
-    @InjectRepository(Product) private readonly productRepo: Repository<Product>,
+    @InjectRepository(Category)
+    private readonly categoryRepo: Repository<Category>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
   ) {}
 
   @Post('force-delete')
@@ -37,5 +45,3 @@ export class ForceDeleteController {
     return { success: false };
   }
 }
-
-

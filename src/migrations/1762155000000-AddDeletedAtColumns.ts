@@ -5,17 +5,29 @@ export class AddDeletedAtColumns1762155000000 implements MigrationInterface {
     // users
     await queryRunner.addColumn(
       'users',
-      new TableColumn({ name: 'deleted_at', type: 'timestamp', isNullable: true }),
+      new TableColumn({
+        name: 'deleted_at',
+        type: 'timestamp',
+        isNullable: true,
+      }),
     );
     // categories
     await queryRunner.addColumn(
       'categories',
-      new TableColumn({ name: 'deleted_at', type: 'timestamp', isNullable: true }),
+      new TableColumn({
+        name: 'deleted_at',
+        type: 'timestamp',
+        isNullable: true,
+      }),
     );
     // products
     await queryRunner.addColumn(
       'products',
-      new TableColumn({ name: 'deleted_at', type: 'timestamp', isNullable: true }),
+      new TableColumn({
+        name: 'deleted_at',
+        type: 'timestamp',
+        isNullable: true,
+      }),
     );
   }
 
@@ -25,5 +37,3 @@ export class AddDeletedAtColumns1762155000000 implements MigrationInterface {
     await queryRunner.dropColumn('users', 'deleted_at');
   }
 }
-
-

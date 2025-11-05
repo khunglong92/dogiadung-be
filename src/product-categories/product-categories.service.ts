@@ -17,7 +17,7 @@ export class ProductCategoriesService {
       name: dto.name,
       slug: dto.slug,
       description: dto.description,
-      sampleProducts: dto.sampleProducts as any,
+      sampleProducts: dto.sampleProducts,
       contactPhone: dto.contactPhone,
       contactZalo: dto.contactZalo,
       isActive: dto.isActive ?? true,
@@ -26,22 +26,41 @@ export class ProductCategoriesService {
   }
 
   findAll(): Promise<ProductCategory[]> {
-    return this.repo.find({ where: { deletedAt: IsNull() }, order: { name: 'ASC' } });
+    return this.repo.find({
+      where: { deletedAt: IsNull() },
+      order: { name: 'ASC' },
+    });
   }
 
   async findOne(id: string): Promise<ProductCategory> {
-    const found = await this.repo.findOne({ where: { id, deletedAt: IsNull() } });
+    const found = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
     if (!found) throw new NotFoundException('Product category not found');
     return found;
   }
 
-  async update(id: string, dto: UpdateProductCategoryDto): Promise<ProductCategory> {
+  async update(
+    id: string,
+    dto: UpdateProductCategoryDto,
+  ): Promise<ProductCategory> {
     const existing = await this.findOne(id);
     if (dto.name !== undefined) existing.name = dto.name;
     if (dto.slug !== undefined) existing.slug = dto.slug;
     if (dto.description !== undefined) existing.description = dto.description;
-    if (dto.sampleProducts !== undefined) existing.sampleProducts = dto.sampleProducts as any;
-    if (dto.contactPhone !== undefined) existing.contactPhone = dto.contactPhone;
+    if (dto.sampleProducts !== undefined)
+      existing.sampleProducts =
+        dto.sampleProducts
+          ?.filter(
+            (p) => !!p && typeof p.name === 'string' && p.name.length > 0,
+          )
+          .map((p) => ({
+            name: p.name as string,
+            image: p.image,
+            description: p.description,
+          })) ?? null;
+    if (dto.contactPhone !== undefined)
+      existing.contactPhone = dto.contactPhone;
     if (dto.contactZalo !== undefined) existing.contactZalo = dto.contactZalo;
     if (dto.isActive !== undefined) existing.isActive = dto.isActive;
     return this.repo.save(existing);
@@ -53,5 +72,3 @@ export class ProductCategoriesService {
     await this.repo.save(existing);
   }
 }
-
-

@@ -18,5 +18,3 @@ export class AlterUsersAddDobAvt1762152000000 implements MigrationInterface {
     await queryRunner.dropColumn('users', 'dateOfBirth');
   }
 }
-
-

@@ -10,5 +10,3 @@ import { ProductCategory } from './product-category.entity';
   providers: [ProductCategoriesService],
 })
 export class ProductCategoriesModule {}
-
-

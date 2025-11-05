@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AlterProductsDescriptionSpecsJson1762154000000 implements MigrationInterface {
+export class AlterProductsDescriptionSpecsJson1762154000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // description: text -> jsonb (safe convert any existing text to JSON string)
     await queryRunner.query(
@@ -22,5 +24,3 @@ export class AlterProductsDescriptionSpecsJson1762154000000 implements Migration
     );
   }
 }
-
-

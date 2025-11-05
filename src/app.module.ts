@@ -10,6 +10,7 @@ import { UploadModule } from './upload/upload.module';
 import { ForceDeleteController } from './admin/force-delete.controller';
 import { ServicesModule } from './services/services.module';
 import { ProductCategoriesModule } from './product-categories/product-categories.module';
+import { ProjectsModule } from './projects/projects.module';
 import { Category } from './categories/category.entity';
 import { Product } from './products/product.entity';
 
@@ -32,6 +33,7 @@ import { Product } from './products/product.entity';
     UploadModule,
     ServicesModule,
     ProductCategoriesModule,
+    ProjectsModule,
     // Repositories used directly by ForceDeleteController
     TypeOrmModule.forFeature([Category, Product]),
   ],

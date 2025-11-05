@@ -43,5 +43,3 @@ export class AlterCategoriesAudit1762151000000 implements MigrationInterface {
     );
   }
 }
-
-

@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 class UpdateSampleProductDto {
   @ApiPropertyOptional({ description: 'Tên sản phẩm mẫu' })
@@ -37,7 +44,10 @@ export class UpdateProductCategoryDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'Danh sách sản phẩm mẫu', type: [UpdateSampleProductDto] })
+  @ApiPropertyOptional({
+    description: 'Danh sách sản phẩm mẫu',
+    type: [UpdateSampleProductDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -59,5 +69,3 @@ export class UpdateProductCategoryDto {
   @IsOptional()
   isActive?: boolean;
 }
-
-

@@ -10,5 +10,3 @@ import { CompanyService } from './services.entity';
   providers: [ServicesService],
 })
 export class ServicesModule {}
-
-
