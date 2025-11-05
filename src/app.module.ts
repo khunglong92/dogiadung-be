@@ -9,6 +9,7 @@ import { ProductsModule } from './products/products.module';
 import { UploadModule } from './upload/upload.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ForceDeleteController } from './admin/force-delete.controller';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ForceDeleteController } from './admin/force-delete.controller';
     CategoriesModule,
     ProductsModule,
     UploadModule,
+    ServicesModule,
   ],
   controllers: [AppController, ForceDeleteController],
   providers: [AppService],
