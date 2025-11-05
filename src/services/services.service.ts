@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CompanyService } from './services.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -29,15 +29,17 @@ export class ServicesService {
   }
 
   async findAll(parentId?: string): Promise<CompanyService[]> {
+    const baseWhere: any = { deletedAt: IsNull() };
+    const where = parentId ? { ...baseWhere, parent: { id: parentId } } : baseWhere;
     return this.repo.find({
-      where: parentId ? { parent: { id: parentId } } : {},
+      where,
       relations: { parent: true, children: false },
       order: { order: 'ASC', name: 'ASC' },
     });
   }
 
   async findOne(id: string): Promise<CompanyService> {
-    const found = await this.repo.findOne({ where: { id }, relations: { parent: true } });
+    const found = await this.repo.findOne({ where: { id, deletedAt: IsNull() }, relations: { parent: true } });
     if (!found) throw new NotFoundException('Service not found');
     return found;
   }
@@ -60,7 +62,9 @@ export class ServicesService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.repo.delete({ id });
+    const existing = await this.findOne(id);
+    existing.deletedAt = new Date();
+    await this.repo.save(existing);
   }
 }
 

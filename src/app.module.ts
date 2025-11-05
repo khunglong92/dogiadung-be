@@ -7,9 +7,11 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { UploadModule } from './upload/upload.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ForceDeleteController } from './admin/force-delete.controller';
 import { ServicesModule } from './services/services.module';
+import { ProductCategoriesModule } from './product-categories/product-categories.module';
+import { Category } from './categories/category.entity';
+import { Product } from './products/product.entity';
 
 @Module({
   imports: [
@@ -29,6 +31,9 @@ import { ServicesModule } from './services/services.module';
     ProductsModule,
     UploadModule,
     ServicesModule,
+    ProductCategoriesModule,
+    // Repositories used directly by ForceDeleteController
+    TypeOrmModule.forFeature([Category, Product]),
   ],
   controllers: [AppController, ForceDeleteController],
   providers: [AppService],

@@ -54,4 +54,8 @@ export class CompanyService {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ApiProperty({ description: 'Thời điểm xoá mềm', required: false })
+  @Column({ type: 'timestamp', name: 'deleted_at', nullable: true })
+  deletedAt?: Date | null;
 }

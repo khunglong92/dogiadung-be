@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Product } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -33,7 +33,7 @@ export class ProductsService {
 
   async findAll(page = 1, limit = 10): Promise<{ data: Product[]; total: number; page: number; limit: number }> {
     const [data, total] = await this.productRepository.findAndCount({
-      where: { deletedAt: null },
+      where: { deletedAt: IsNull() },
       relations: { category: true },
       order: { id: 'ASC' },
       skip: (page - 1) * limit,
@@ -43,7 +43,7 @@ export class ProductsService {
   }
 
   async findOne(id: number): Promise<Product> {
-    const found = await this.productRepository.findOne({ where: { id, deletedAt: null }, relations: { category: true } });
+    const found = await this.productRepository.findOne({ where: { id, deletedAt: IsNull() }, relations: { category: true } });
     if (!found) {
       throw new NotFoundException('Product not found');
     }
