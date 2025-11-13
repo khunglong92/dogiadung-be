@@ -1,56 +1,133 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
-  IsInt,
+  IsString,
   IsNotEmpty,
   IsOptional,
-  IsString,
-  IsUUID,
-  MaxLength,
-  Min,
+  IsArray,
+  IsUrl,
+  IsInt,
+  IsEnum,
+  IsBoolean,
+  ArrayMaxSize,
 } from 'class-validator';
 
 export class CreateServiceDto {
+  @ApiProperty({ description: 'Đường dẫn thân thiện SEO' })
+  @IsString()
+  @IsNotEmpty()
+  slug: string;
+
   @ApiProperty({ description: 'Tên dịch vụ' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
-  name: string;
+  title: string;
 
-  @ApiProperty({ description: 'Slug duy nhất' })
+  @ApiPropertyOptional({ description: 'Phân nhóm hoặc mô tả ngắn' })
+  @IsString()
+  @IsOptional()
+  subtitle?: string;
+
+  @ApiProperty({ description: 'Mô tả ngắn gọn' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
-  slug: string;
-
-  @ApiPropertyOptional({ description: 'ID dịch vụ cha (UUID)' })
-  @IsUUID()
-  @IsOptional()
-  parentId?: string;
-
-  @ApiPropertyOptional({ description: 'Mô tả ngắn' })
-  @IsString()
-  @IsOptional()
-  description?: string;
+  short_description: string;
 
   @ApiPropertyOptional({ description: 'Nội dung chi tiết' })
   @IsString()
   @IsOptional()
   content?: string;
 
-  @ApiPropertyOptional({ description: 'Ảnh đại diện (URL)' })
+  @ApiPropertyOptional({ description: 'Danh sách các đặc điểm nổi bật' })
   @IsString()
   @IsOptional()
-  image?: string;
+  features?: string;
+
+  @ApiPropertyOptional({ description: 'Danh sách công nghệ / thiết bị' })
+  @IsString()
+  @IsOptional()
+  technologies?: string;
+
+  @ApiPropertyOptional({ description: 'Lợi ích dành cho khách hàng' })
+  @IsString()
+  @IsOptional()
+  benefits?: string;
+
+  @ApiPropertyOptional({ description: 'Nhóm khách hàng mục tiêu' })
+  @IsString()
+  @IsOptional()
+  customers?: string;
+
+  @ApiPropertyOptional({ description: 'Danh sách link ảnh (tối đa 20)' })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUrl({}, { each: true })
+  @IsOptional()
+  image_urls?: string[];
+
+  @ApiPropertyOptional({ description: 'Icon đại diện' })
+  @IsString()
+  @IsOptional()
+  icon?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nội dung nút CTA',
+    default: 'Liên hệ tư vấn',
+  })
+  @IsString()
+  @IsOptional()
+  cta_label?: string;
+
+  @ApiProperty({ description: 'Đường dẫn CTA' })
+  @IsString()
+  @IsNotEmpty()
+  cta_link: string;
 
   @ApiPropertyOptional({ description: 'Thứ tự hiển thị', default: 0 })
   @IsInt()
-  @Min(0)
   @IsOptional()
-  order?: number;
+  order_index?: number;
 
-  @ApiPropertyOptional({ description: 'Kích hoạt', default: true })
+  @ApiPropertyOptional({ description: 'Từ khóa hoặc hashtag' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
+
+  @ApiPropertyOptional({ description: 'Tiêu đề SEO' })
+  @IsString()
+  @IsOptional()
+  seo_title?: string;
+
+  @ApiPropertyOptional({ description: 'Mô tả SEO' })
+  @IsString()
+  @IsOptional()
+  seo_description?: string;
+
+  @ApiPropertyOptional({ description: 'Mô tả ảnh cho SEO' })
+  @IsString()
+  @IsOptional()
+  alt_text?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái hiển thị',
+    enum: ['draft', 'published', 'archived'],
+    default: 'published',
+  })
+  @IsEnum(['draft', 'published', 'archived'])
+  @IsOptional()
+  status?: string;
+
+  @ApiPropertyOptional({
+    description: 'Giao diện ưu tiên',
+    enum: ['light', 'dark', 'auto'],
+    default: 'auto',
+  })
+  @IsEnum(['light', 'dark', 'auto'])
+  @IsOptional()
+  theme_variant?: string;
+
+  @ApiPropertyOptional({ description: 'Dịch vụ nổi bật', default: false })
   @IsBoolean()
   @IsOptional()
-  isActive?: boolean;
+  is_featured?: boolean;
 }

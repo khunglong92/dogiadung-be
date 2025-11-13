@@ -1,59 +1,59 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
-import { ProjectCategory } from './entities/project-category.entity';
 import { CreateProjectCategoryDto } from './dto/create-project-category.dto';
 import { UpdateProjectCategoryDto } from './dto/update-project-category.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ProjectCategoriesService {
-  constructor(
-    @InjectRepository(ProjectCategory)
-    private readonly repo: Repository<ProjectCategory>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateProjectCategoryDto): Promise<ProjectCategory> {
-    const entity = this.repo.create({
+  create(dto: CreateProjectCategoryDto) {
+    return this.prisma.projectCategory.create({
+      data: {
       name: dto.name,
       slug: dto.slug,
       description: dto.description,
       order: dto.order ?? 0,
       isActive: dto.isActive ?? true,
-    });
-    return this.repo.save(entity);
-  }
-
-  findAll(): Promise<ProjectCategory[]> {
-    return this.repo.find({
-      where: { deletedAt: IsNull() },
-      order: { order: 'ASC', name: 'ASC' },
+      },
     });
   }
 
-  async findOne(id: string): Promise<ProjectCategory> {
-    const found = await this.repo.findOne({
-      where: { id, deletedAt: IsNull() },
+  findAll() {
+    return this.prisma.projectCategory.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findOne(id: string) {
+    const found = await this.prisma.projectCategory.findFirst({
+      where: { id, deletedAt: null },
     });
     if (!found) throw new NotFoundException('Project category not found');
     return found;
   }
 
-  async update(
-    id: string,
-    dto: UpdateProjectCategoryDto,
-  ): Promise<ProjectCategory> {
-    const existing = await this.findOne(id);
-    if (dto.name !== undefined) existing.name = dto.name;
-    if (dto.slug !== undefined) existing.slug = dto.slug;
-    if (dto.description !== undefined) existing.description = dto.description;
-    if (dto.order !== undefined) existing.order = dto.order;
-    if (dto.isActive !== undefined) existing.isActive = dto.isActive;
-    return this.repo.save(existing);
+  async update(id: string, dto: UpdateProjectCategoryDto) {
+    await this.findOne(id); // Check if exists
+
+    return this.prisma.projectCategory.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.slug !== undefined && { slug: dto.slug }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.order !== undefined && { order: dto.order }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+    });
   }
 
   async remove(id: string): Promise<void> {
-    const existing = await this.findOne(id);
-    existing.deletedAt = new Date();
-    await this.repo.save(existing);
+    await this.findOne(id); // Check if exists
+    await this.prisma.projectCategory.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

@@ -8,8 +8,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-// import * as bcrypt from 'bcrypt';
-import { UserRole } from 'src/types/auth/User';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -106,7 +105,8 @@ export class AuthService {
         dto.email,
         dto.password,
         dto.name,
-        dto.role || UserRole.USER,
+
+        dto.role ?? UserRole.USER,
       );
 
       // Don't wait for email to be sent before responding

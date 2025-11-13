@@ -77,11 +77,10 @@ export class CreateProductDto {
   @IsOptional()
   technicalSpecs?: ProductTechnicalSpecsDto;
 
-  @ApiPropertyOptional({ description: 'Giá sản phẩm (VND)' })
+  @ApiPropertyOptional({ description: 'Giá sản phẩm (VND)', type: String })
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  price?: number;
+  @IsString()
+  price?: string;
 
   @ApiPropertyOptional({
     description: 'Danh sách hình ảnh URL',
@@ -95,6 +94,10 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   warrantyPolicy?: string;
+
+  @ApiPropertyOptional({ description: 'Sản phẩm nổi bật', default: false })
+  @IsOptional()
+  isFeatured?: boolean;
 
   @ApiProperty({ description: 'ID danh mục' })
   @IsInt()

@@ -23,7 +23,7 @@
 
 ## Do Gia Dung - Backend (NestJS + PostgreSQL + TypeORM)
 
-API backend phục vụ xác thực người dùng, quản lý danh mục (categories) và sản phẩm (products), tích hợp Swagger, gửi mail, JWT access/refresh token.
+API backend quản lý danh mục, sản phẩm, dịch vụ, dự án; xác thực JWT; tài liệu Swagger; migrations TypeORM.
 
 ### Công nghệ chính
 - NestJS, TypeScript
@@ -39,6 +39,8 @@ API backend phục vụ xác thực người dùng, quản lý danh mục (categ
 src/
   app.module.ts
   main.ts
+  admin/
+    force-delete.controller.ts         # Endpoint hỗ trợ xoá cứng bản ghi (quản trị)
   auth/
     auth.controller.ts
     auth.module.ts
@@ -49,11 +51,6 @@ src/
       login.dto.ts
       register.dto.ts
       refresh-token.dto.ts
-  users/
-    user.entity.ts
-    users.controller.ts
-    users.module.ts
-    users.service.ts
   categories/
     categories.controller.ts
     categories.module.ts
@@ -62,6 +59,14 @@ src/
     dto/
       create-category.dto.ts
       update-category.dto.ts
+  product-categories/
+    product-categories.controller.ts
+    product-categories.module.ts
+    product-categories.service.ts
+    product-category.entity.ts
+    dto/
+      create-product-category.dto.ts
+      update-product-category.dto.ts
   products/
     products.controller.ts
     products.module.ts
@@ -70,9 +75,39 @@ src/
     dto/
       create-product.dto.ts
       update-product.dto.ts
+  services/
+    services.controller.ts
+    services.module.ts
+    services.service.ts
+    services.entity.ts
+    dto/
+      create-service.dto.ts
+      update-service.dto.ts
+  projects/
+    projects.controller.ts
+    projects.module.ts
+    projects.service.ts
+    entities/
+      project.entity.ts
+      project-category.entity.ts
+    dto/
+      create-project.dto.ts
+      update-project.dto.ts
+      create-project-category.dto.ts
+      update-project-category.dto.ts
+  upload/
+    upload.module.ts
+    upload.controller.ts
+    upload.service.ts
+  users/
+    users.controller.ts
+    users.module.ts
+    users.service.ts
+    user.entity.ts
   migrations/
-    1762073747329-InitMigration.ts
-    1762150000000-CreateProductsAndCategories.ts
+    ... (các file migration TypeORM)
+  shared/
+    ... (helper, constants, pipes, guards dùng chung nếu có)
   typeorm-cli.config.ts
 ```
 
@@ -81,27 +116,26 @@ src/
 ## Project setup
 
 ```bash
-$ yarn install
+yarn install
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ yarn run start
+yarn dev
 
 # watch mode
-$ yarn run start:dev
+yarn start:dev
 
 # production mode
-$ yarn run start:prod
+yarn start:prod
 ```
 
 ---
 
 ## Yêu cầu môi trường
 - Node.js >= 18
-- Yarn
 - PostgreSQL
 
 Biến môi trường (tùy chọn, có giá trị mặc định trong code):
@@ -120,22 +154,22 @@ DataSource CLI: `src/typeorm-cli.config.ts` (đã khai báo entity và đường
 Chạy migration:
 ```bash
 # chạy migrations
-yarn typeorm-ts-node-commonjs migration:run -d src/typeorm-cli.config.ts
+yarn db:migrate
 
 # revert migration cuối
-yarn typeorm-ts-node-commonjs migration:revert -d src/typeorm-cli.config.ts
+yarn db:revert
 
 # generate migration mới (ví dụ)
-yarn typeorm-ts-node-commonjs migration:generate src/migrations/<Name> -d src/typeorm-cli.config.ts
+yarn db:generate
 ```
 
 Reset DB nhanh (xóa và tạo lại bảng theo migrations):
 ```bash
 # Revert tất cả (chạy lặp lại tới khi sạch)
-yarn typeorm-ts-node-commonjs migration:revert -d src/typeorm-cli.config.ts
+yarn db:revert
 
 # Run lại toàn bộ migrations
-yarn typeorm-ts-node-commonjs migration:run -d src/typeorm-cli.config.ts
+yarn db:migrate
 ```
 
 Migration `1762150000000-CreateProductsAndCategories.ts` sẽ tạo bảng `categories`, `products` và seed sẵn 4 danh mục.
@@ -198,7 +232,7 @@ Lưu ý:
 - `PATCH /categories/:id` (Update)
 - `DELETE /categories/:id` (Delete)
 
-Entity chính: `category.entity.ts` có `name`, `slug` (unique), `description?`.
+Entity chính: `category.entity.ts` có `name` (unique), `description?`, soft delete `deletedAt`.
 
 ---
 
@@ -209,7 +243,141 @@ Entity chính: `category.entity.ts` có `name`, `slug` (unique), `description?`.
 - `PATCH /products/:id` (Update)
 - `DELETE /products/:id` (Delete)
 
-Fields: `name`, `description?`, `price?` (bigint lưu số dạng chuỗi), `images?` (mảng text), `category` (ManyToOne Category).
+Fields: `name`, `description?` (jsonb), `technicalSpecs?` (jsonb), `price?` (bigint transformer), `images?` (text[]), `category` (ManyToOne Category), soft delete `deletedAt`.
+
+## Dịch vụ (Services)
+
+Quản lý thông tin các dịch vụ cung cấp.
+
+### 1. Lấy danh sách dịch vụ (có phân trang)
+
+- **Endpoint:** `GET /services`
+- **Mô tả:** Lấy danh sách tất cả dịch vụ có trạng thái `published`.
+- **Query Params:**
+  - `page` (tùy chọn): Số trang (mặc định: 1).
+  - `perpage` (tùy chọn): Số mục mỗi trang (mặc định: 10).
+
+- **Ví dụ Response (`200 OK`):**
+```json
+{
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "perpage": 10
+  },
+  "data": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "slug": "gia-cong-kim-loai-tam",
+      "title": "Gia Công Kim Loại Tấm",
+      "subtitle": "Gia công & cơ khí chính xác",
+      "short_description": "Chuyên gia công kim loại tấm độ chính xác cao…",
+      "image_url": "https://example.com/image.jpg",
+      "cta_link": "/lien-he",
+      "status": "published",
+      "is_featured": true,
+      "created_at": "2025-11-08T10:00:00.000Z",
+      "updated_at": "2025-11-08T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+### 2. Lấy danh sách dịch vụ nổi bật (có phân trang)
+
+- **Endpoint:** `GET /services/featured`
+- **Mô tả:** Lấy danh sách các dịch vụ được đánh dấu là "nổi bật".
+- **Query Params:** Tương tự như `GET /services`.
+
+### 3. Lấy chi tiết dịch vụ
+
+- **Endpoint:** `GET /services/:id`
+- **Mô tả:** Lấy thông tin chi tiết của một dịch vụ theo ID.
+
+- **Ví dụ Response (`200 OK`):**
+```json
+{
+  "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "slug": "gia-cong-kim-loai-tam",
+  "title": "Gia Công Kim Loại Tấm",
+  "subtitle": "Gia công & cơ khí chính xác",
+  "short_description": "Chuyên gia công kim loại tấm độ chính xác cao…",
+  "content": "<p>Nội dung chi tiết...</p>",
+  "features": ["Gia công chính xác", "Xử lý Inox, thép, nhôm"],
+  "technologies": ["Máy cắt laser", "CNC"],
+  "benefits": ["Tiết kiệm thời gian", "Độ chính xác cao"],
+  "customers": "Nhà máy cơ khí, nội thất",
+  "image_url": "https://example.com/image.jpg",
+  "icon": "gear",
+  "cta_label": "Liên hệ tư vấn",
+  "cta_link": "/lien-he",
+  "order_index": 1,
+  "tags": ["#CNC", "#inox"],
+  "seo_title": "Gia Công Kim Loại Tấm – Thiên Lộc",
+  "seo_description": "Thiên Lộc chuyên gia công kim loại tấm...",
+  "alt_text": "Gia công kim loại tấm tại xưởng Thiên Lộc",
+  "status": "published",
+  "theme_variant": "light",
+  "is_featured": true,
+  "created_at": "2025-11-08T10:00:00.000Z",
+  "updated_at": "2025-11-08T10:00:00.000Z",
+  "deleted_at": null
+}
+```
+
+### 4. Tạo dịch vụ mới
+
+- **Endpoint:** `POST /services`
+- **Mô tả:** Tạo một dịch vụ mới. Yêu cầu xác thực (Bearer Token).
+
+- **Ví dụ Request Body:**
+```json
+{
+  "slug": "dich-vu-moi",
+  "title": "Dịch Vụ Mới",
+  "short_description": "Mô tả ngắn cho dịch vụ mới.",
+  "image_url": "https://example.com/new-service.jpg",
+  "cta_link": "/dich-vu/moi",
+  "status": "draft",
+  "is_featured": false
+}
+```
+
+- **Ví dụ Response (`201 Created`):**
+  - Trả về đối tượng dịch vụ vừa được tạo, có cấu trúc tương tự như response của `GET /services/:id`.
+
+### 5. Cập nhật dịch vụ
+
+- **Endpoint:** `PATCH /services/:id`
+- **Mô tả:** Cập nhật thông tin cho một dịch vụ. Yêu cầu xác thực.
+
+- **Ví dụ Request Body:**
+```json
+{
+  "title": "Tên Dịch Vụ Đã Cập Nhật",
+  "status": "published"
+}
+```
+
+- **Ví dụ Response (`200 OK`):**
+  - Trả về đối tượng dịch vụ sau khi đã cập nhật.
+
+### 6. Xóa dịch vụ (Xóa mềm)
+
+- **Endpoint:** `DELETE /services/:id`
+- **Mô tả:** Xóa mềm một dịch vụ. Bản ghi sẽ không bị xóa khỏi database mà chỉ được đánh dấu là đã xóa (`deleted_at`). Yêu cầu xác thực.
+
+- **Ví dụ Response (`204 No Content`):**
+  - Không có nội dung trả về.
+
+## Dự án (Projects)
+- `POST /projects` (Create) – yêu cầu `categoryId`
+- `GET /projects` (List) – filter theo `categoryId` (tùy chọn)
+- `GET /projects/:id` (Detail)
+- `PATCH /projects/:id` (Update)
+- `DELETE /projects/:id` (Soft delete)
+
+Entities: `project.entity.ts` (ManyToOne ProjectCategory), `project-category.entity.ts`.
 
 ---
 
@@ -254,6 +422,9 @@ yarn dev
 ```bash
 # Development
 yarn dev
+
+# Lint fix
+yarn lint
 
 # Build
 yarn build

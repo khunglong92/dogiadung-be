@@ -1,60 +1,82 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
-import { Product } from './product.entity';
+import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Category } from '../categories/category.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(createDto: CreateProductDto): Promise<Product> {
-    const category = await this.categoryRepository.findOne({
+  async create(createDto: CreateProductDto) {
+    const category = await this.prisma.category.findUnique({
       where: { id: createDto.categoryId },
     });
     if (!category) {
       throw new NotFoundException('Category not found');
     }
-    const entity = this.productRepository.create({
+
+    const descriptionObj: Record<string, unknown> | undefined =
+      createDto.description
+        ? {
+            overview: createDto.description.overview,
+            features: createDto.description.features,
+            applications: createDto.description.applications,
+            materials: createDto.description.materials,
+          }
+        : undefined;
+
+    const technicalSpecsObj: Record<string, unknown> | undefined =
+      createDto.technicalSpecs
+        ? {
+            dimensions: createDto.technicalSpecs.dimensions,
+            weight: createDto.technicalSpecs.weight,
+            material: createDto.technicalSpecs.material,
+            surfaceFinish: createDto.technicalSpecs.surfaceFinish,
+            loadCapacity: createDto.technicalSpecs.loadCapacity,
+            weldingType: createDto.technicalSpecs.weldingType,
+            customizable: createDto.technicalSpecs.customizable,
+          }
+        : undefined;
+
+    return this.prisma.product.create({
+      data: {
       name: createDto.name,
-      description: createDto.description as unknown as
-        | Record<string, unknown>
-        | undefined,
-      images: createDto.images,
-      price: typeof createDto.price === 'number' ? createDto.price : null,
-      technicalSpecs: createDto.technicalSpecs as unknown as
-        | Record<string, unknown>
-        | undefined,
-      category,
+        description: descriptionObj as Prisma.InputJsonValue,
+        images: createDto.images || [],
+      price: createDto.price ?? null,
+        technicalSpecs: technicalSpecsObj as Prisma.InputJsonValue,
+        categoryId: createDto.categoryId,
+      isFeatured: createDto.isFeatured ?? false,
+      },
+      include: { category: true },
     });
-    return this.productRepository.save(entity);
   }
 
-  async findAll(
-    page = 1,
-    limit = 10,
-  ): Promise<{ data: Product[]; total: number; page: number; limit: number }> {
-    const [data, total] = await this.productRepository.findAndCount({
-      where: { deletedAt: IsNull() },
-      relations: { category: true },
-      order: { id: 'ASC' },
+  async findAll(page = 1, limit = 10, categoryId?: number) {
+    const where = {
+      deletedAt: null,
+      ...(categoryId && { categoryId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.product.findMany({
+      where,
+        include: { category: true },
+        orderBy: { id: 'asc' },
       skip: (page - 1) * limit,
       take: limit,
-    });
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
     return { data, total, page, limit };
   }
 
-  async findOne(id: number): Promise<Product> {
-    const found = await this.productRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-      relations: { category: true },
+  async findOne(id: number) {
+    const found = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      include: { category: true },
     });
     if (!found) {
       throw new NotFoundException('Product not found');
@@ -62,38 +84,116 @@ export class ProductsService {
     return found;
   }
 
-  async update(id: number, updateDto: UpdateProductDto): Promise<Product> {
-    const product = await this.findOne(id);
+  async update(id: number, updateDto: UpdateProductDto) {
+    await this.findOne(id); // Check if exists
+
     if (typeof updateDto.categoryId === 'number') {
-      const category = await this.categoryRepository.findOne({
+      const category = await this.prisma.category.findUnique({
         where: { id: updateDto.categoryId },
       });
       if (!category) {
         throw new NotFoundException('Category not found');
       }
-      product.category = category;
     }
-    if (typeof updateDto.price === 'number') {
-      product.price = updateDto.price;
-    }
-    if (updateDto.name !== undefined) product.name = updateDto.name;
-    if (updateDto.description !== undefined)
-      product.description = updateDto.description as unknown as Record<
-        string,
-        unknown
-      >;
-    if (updateDto.technicalSpecs !== undefined)
-      product.technicalSpecs = updateDto.technicalSpecs as unknown as Record<
-        string,
-        unknown
-      >;
-    if (updateDto.images !== undefined) product.images = updateDto.images;
-    return this.productRepository.save(product);
+
+    const descriptionObj =
+      updateDto.description !== undefined
+        ? updateDto.description
+        ? {
+            ...(updateDto.description.overview !== undefined && {
+              overview: updateDto.description.overview,
+            }),
+            ...(updateDto.description.features !== undefined && {
+              features: updateDto.description.features,
+            }),
+            ...(updateDto.description.applications !== undefined && {
+              applications: updateDto.description.applications,
+            }),
+            ...(updateDto.description.materials !== undefined && {
+              materials: updateDto.description.materials,
+            }),
+          }
+          : null
+        : undefined;
+
+    const technicalSpecsObj =
+      updateDto.technicalSpecs !== undefined
+        ? updateDto.technicalSpecs
+        ? {
+            ...(updateDto.technicalSpecs.dimensions !== undefined && {
+              dimensions: updateDto.technicalSpecs.dimensions,
+            }),
+            ...(updateDto.technicalSpecs.weight !== undefined && {
+              weight: updateDto.technicalSpecs.weight,
+            }),
+            ...(updateDto.technicalSpecs.material !== undefined && {
+              material: updateDto.technicalSpecs.material,
+            }),
+            ...(updateDto.technicalSpecs.surfaceFinish !== undefined && {
+              surfaceFinish: updateDto.technicalSpecs.surfaceFinish,
+            }),
+            ...(updateDto.technicalSpecs.loadCapacity !== undefined && {
+              loadCapacity: updateDto.technicalSpecs.loadCapacity,
+            }),
+            ...(updateDto.technicalSpecs.weldingType !== undefined && {
+              weldingType: updateDto.technicalSpecs.weldingType,
+            }),
+            ...(updateDto.technicalSpecs.customizable !== undefined && {
+              customizable: updateDto.technicalSpecs.customizable,
+            }),
+          }
+          : null
+        : undefined;
+
+    return this.prisma.product.update({
+      where: { id },
+      data: {
+        ...(updateDto.name !== undefined && { name: updateDto.name }),
+        ...(descriptionObj !== undefined && {
+          description: descriptionObj as Prisma.InputJsonValue,
+        }),
+        ...(technicalSpecsObj !== undefined && {
+          technicalSpecs: technicalSpecsObj as Prisma.InputJsonValue,
+        }),
+        ...(updateDto.price !== undefined && { price: updateDto.price }),
+        ...(updateDto.images !== undefined && { images: updateDto.images }),
+        ...(updateDto.isFeatured !== undefined && {
+          isFeatured: updateDto.isFeatured,
+        }),
+      },
+      include: { category: true },
+    });
+  }
+
+  async findFeatured(page = 1, perPage = 10) {
+    const where = { deletedAt: null, isFeatured: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        include: { category: true },
+        orderBy: { id: 'asc' },
+      skip: (page - 1) * perPage,
+      take: perPage,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    return {
+      pagination: {
+        total,
+        page,
+        perpage: perPage,
+      },
+      data,
+    };
   }
 
   async remove(id: number): Promise<void> {
-    const product = await this.findOne(id);
-    product.deletedAt = new Date();
-    await this.productRepository.save(product);
+    await this.findOne(id); // Check if exists
+    await this.prisma.product.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

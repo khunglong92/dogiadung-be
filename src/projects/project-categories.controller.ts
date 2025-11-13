@@ -17,7 +17,6 @@ import {
 import { ProjectCategoriesService } from './project-categories.service';
 import { CreateProjectCategoryDto } from './dto/create-project-category.dto';
 import { UpdateProjectCategoryDto } from './dto/update-project-category.dto';
-import { ProjectCategory } from './entities/project-category.entity';
 
 @ApiTags('Project Categories')
 @ApiBearerAuth()
@@ -27,25 +26,25 @@ export class ProjectCategoriesController {
 
   @Post()
   @ApiOperation({ summary: 'Tạo danh mục dự án' })
-  @ApiResponse({ status: 201, type: ProjectCategory })
-  create(@Body() dto: CreateProjectCategoryDto): Promise<ProjectCategory> {
+  @ApiResponse({ status: 201, description: 'Tạo thành công' })
+  create(@Body() dto: CreateProjectCategoryDto) {
     return this.service.create(dto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Danh sách danh mục dự án' })
-  @ApiResponse({ status: 200, type: [ProjectCategory] })
-  findAll(): Promise<ProjectCategory[]> {
+  @ApiResponse({ status: 200, description: 'Danh sách' })
+  findAll() {
     return this.service.findAll();
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật danh mục dự án' })
-  @ApiResponse({ status: 200, type: ProjectCategory })
+  @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProjectCategoryDto,
-  ): Promise<ProjectCategory> {
+  ) {
     return this.service.update(id, dto);
   }
 

@@ -6,10 +6,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Category } from '../categories/category.entity';
-import { Product } from '../products/product.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 class ForceDeleteDto {
   type: 'category' | 'product';
@@ -20,12 +17,7 @@ class ForceDeleteDto {
 @ApiBearerAuth()
 @Controller('admin')
 export class ForceDeleteController {
-  constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepo: Repository<Category>,
-    @InjectRepository(Product)
-    private readonly productRepo: Repository<Product>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   @Post('force-delete')
   @ApiOperation({ summary: 'Xoá cứng một thực thể và quan hệ liên quan' })
@@ -33,13 +25,13 @@ export class ForceDeleteController {
   @ApiResponse({ status: 200, schema: { example: { success: true } } })
   async forceDelete(@Body() body: ForceDeleteDto) {
     if (body.type === 'product') {
-      await this.productRepo.delete({ id: body.id });
+      await this.prisma.product.delete({ where: { id: body.id } });
       return { success: true };
     }
     if (body.type === 'category') {
       // delete all products in this category then category itself
-      await this.productRepo.delete({ category: { id: body.id } as any });
-      await this.categoryRepo.delete({ id: body.id });
+      await this.prisma.product.deleteMany({ where: { categoryId: body.id } });
+      await this.prisma.category.delete({ where: { id: body.id } });
       return { success: true };
     }
     return { success: false };

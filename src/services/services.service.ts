@@ -1,77 +1,154 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository, FindOptionsWhere } from 'typeorm';
-import { CompanyService } from './services.entity';
+import { ServiceStatus, ServiceThemeVariant } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ServicesService {
-  constructor(
-    @InjectRepository(CompanyService)
-    private readonly repo: Repository<CompanyService>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateServiceDto): Promise<CompanyService> {
-    const entity = this.repo.create({
-      name: dto.name,
-      slug: dto.slug,
-      description: dto.description,
-      content: dto.content,
-      image: dto.image,
-      order: dto.order ?? 0,
-      isActive: dto.isActive ?? true,
+  async create(dto: CreateServiceDto) {
+    return this.prisma.service.create({
+      data: {
+        slug: dto.slug,
+        title: dto.title,
+        subtitle: dto.subtitle,
+        shortDescription: dto.short_description,
+        content: dto.content,
+        features: dto.features,
+        technologies: dto.technologies,
+        benefits: dto.benefits,
+        customers: dto.customers,
+        imageUrls: dto.image_urls || [],
+        icon: dto.icon,
+        ctaLabel: dto.cta_label || 'Liên hệ tư vấn',
+        ctaLink: dto.cta_link,
+        orderIndex: dto.order_index || 0,
+        tags: dto.tags || [],
+        seoTitle: dto.seo_title,
+        seoDescription: dto.seo_description,
+        altText: dto.alt_text,
+        status: (dto.status as ServiceStatus) || ServiceStatus.published,
+        themeVariant: dto.theme_variant as ServiceThemeVariant,
+        isFeatured: dto.is_featured || false,
+      },
     });
-    if (dto.parentId) {
-      entity.parent = await this.repo.findOne({ where: { id: dto.parentId } });
+  }
+
+  async findAll(
+    page = 1,
+    perPage = 10,
+    status?: ServiceStatus,
+  ): Promise<{
+    pagination: { total: number; page: number; perpage: number };
+    data: any[];
+  }> {
+    console.log('status', status);
+    const where = { status: status ?? ServiceStatus.published };
+
+    const [data, total] = await Promise.all([
+      this.prisma.service.findMany({
+        where,
+        orderBy: [{ orderIndex: 'asc' }, { title: 'asc' }],
+      skip: (page - 1) * perPage,
+      take: perPage,
+      }),
+      this.prisma.service.count({ where }),
+    ]);
+
+    return {
+      pagination: {
+        total,
+        page,
+        perpage: perPage,
+      },
+      data,
+    };
+  }
+
+  async findOne(id: string) {
+    const found = await this.prisma.service.findUnique({ where: { id } });
+    if (!found) {
+      throw new NotFoundException('Service not found');
     }
-    return this.repo.save(entity);
-  }
-
-  async findAll(parentId?: string): Promise<CompanyService[]> {
-    const baseWhere: FindOptionsWhere<CompanyService> = { deletedAt: IsNull() };
-    const where: FindOptionsWhere<CompanyService> = parentId
-      ? {
-          ...baseWhere,
-          parent: { id: parentId } as FindOptionsWhere<CompanyService>,
-        }
-      : baseWhere;
-    return this.repo.find({
-      where,
-      relations: { parent: true, children: false },
-      order: { order: 'ASC', name: 'ASC' },
-    });
-  }
-
-  async findOne(id: string): Promise<CompanyService> {
-    const found = await this.repo.findOne({
-      where: { id, deletedAt: IsNull() },
-      relations: { parent: true },
-    });
-    if (!found) throw new NotFoundException('Service not found');
     return found;
   }
 
-  async update(id: string, dto: UpdateServiceDto): Promise<CompanyService> {
-    const existing = await this.findOne(id);
-    if (dto.parentId !== undefined) {
-      existing.parent = dto.parentId
-        ? await this.repo.findOne({ where: { id: dto.parentId } })
-        : null;
-    }
-    if (dto.name !== undefined) existing.name = dto.name;
-    if (dto.slug !== undefined) existing.slug = dto.slug;
-    if (dto.description !== undefined) existing.description = dto.description;
-    if (dto.content !== undefined) existing.content = dto.content;
-    if (dto.image !== undefined) existing.image = dto.image;
-    if (dto.order !== undefined) existing.order = dto.order;
-    if (dto.isActive !== undefined) existing.isActive = dto.isActive;
-    return this.repo.save(existing);
+  async update(id: string, dto: UpdateServiceDto) {
+    await this.findOne(id); // Check if exists
+    return this.prisma.service.update({
+      where: { id },
+      data: {
+        ...(dto.slug !== undefined && { slug: dto.slug }),
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.subtitle !== undefined && { subtitle: dto.subtitle }),
+        ...(dto.short_description !== undefined && {
+          shortDescription: dto.short_description,
+        }),
+        ...(dto.content !== undefined && { content: dto.content }),
+        ...(dto.features !== undefined && { features: dto.features }),
+        ...(dto.technologies !== undefined && {
+          technologies: dto.technologies,
+        }),
+        ...(dto.benefits !== undefined && { benefits: dto.benefits }),
+        ...(dto.customers !== undefined && { customers: dto.customers }),
+        ...(dto.image_urls !== undefined && { imageUrls: dto.image_urls }),
+        ...(dto.icon !== undefined && { icon: dto.icon }),
+        ...(dto.cta_label !== undefined && { ctaLabel: dto.cta_label }),
+        ...(dto.cta_link !== undefined && { ctaLink: dto.cta_link }),
+        ...(dto.order_index !== undefined && { orderIndex: dto.order_index }),
+        ...(dto.tags !== undefined && { tags: dto.tags }),
+        ...(dto.seo_title !== undefined && { seoTitle: dto.seo_title }),
+        ...(dto.seo_description !== undefined && {
+          seoDescription: dto.seo_description,
+        }),
+        ...(dto.alt_text !== undefined && { altText: dto.alt_text }),
+        ...(dto.status !== undefined && {
+          status: dto.status as ServiceStatus,
+        }),
+        ...(dto.theme_variant !== undefined && {
+          themeVariant: dto.theme_variant as ServiceThemeVariant,
+        }),
+        ...(dto.is_featured !== undefined && { isFeatured: dto.is_featured }),
+      },
+    });
+  }
+
+  async findFeatured(
+    page = 1,
+    perPage = 10,
+  ): Promise<{
+    pagination: { total: number; page: number; perpage: number };
+    data: any[];
+  }> {
+    const where = {
+      isFeatured: true,
+      status: ServiceStatus.published,
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.service.findMany({
+        where,
+        orderBy: [{ orderIndex: 'asc' }, { title: 'asc' }],
+      skip: (page - 1) * perPage,
+      take: perPage,
+      }),
+      this.prisma.service.count({ where }),
+    ]);
+
+    return {
+      pagination: {
+        total,
+        page,
+        perpage: perPage,
+      },
+      data,
+    };
   }
 
   async remove(id: string): Promise<void> {
-    const existing = await this.findOne(id);
-    existing.deletedAt = new Date();
-    await this.repo.save(existing);
+    await this.findOne(id); // Check if exists
+    await this.prisma.service.delete({ where: { id } });
   }
 }

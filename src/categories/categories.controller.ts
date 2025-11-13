@@ -17,7 +17,6 @@ import {
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Category } from './category.entity';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -31,8 +30,8 @@ export class CategoriesController {
     description:
       'Tạo danh mục với các trường: name (bắt buộc), description (tùy chọn).',
   })
-  @ApiResponse({ status: 201, description: 'Tạo thành công', type: Category })
-  create(@Body() body: CreateCategoryDto): Promise<Category> {
+  @ApiResponse({ status: 201, description: 'Tạo thành công' })
+  create(@Body() body: CreateCategoryDto) {
     return this.categoriesService.create(body);
   }
 
@@ -41,9 +40,8 @@ export class CategoriesController {
   @ApiResponse({
     status: 200,
     description: 'Danh sách các danh mục',
-    type: [Category],
   })
-  findAll(): Promise<Category[]> {
+  findAll() {
     // Simple: giữ nguyên trả mảng, có thể nâng cấp phân trang sau
     return this.categoriesService.findAll();
   }
@@ -53,9 +51,8 @@ export class CategoriesController {
   @ApiResponse({
     status: 200,
     description: 'Chi tiết danh mục',
-    type: Category,
   })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Category> {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.findOne(id);
   }
 
@@ -68,12 +65,11 @@ export class CategoriesController {
   @ApiResponse({
     status: 200,
     description: 'Cập nhật thành công',
-    type: Category,
   })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateCategoryDto,
-  ): Promise<Category> {
+  ) {
     return this.categoriesService.update(id, body);
   }
 

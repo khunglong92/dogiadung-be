@@ -87,11 +87,10 @@ export class UpdateProductDto {
   @IsOptional()
   technicalSpecs?: UpdateProductTechnicalSpecsDto;
 
-  @ApiPropertyOptional({ description: 'Giá sản phẩm (VND)' })
+  @ApiPropertyOptional({ description: 'Giá sản phẩm (VND)', type: String })
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  price?: number;
+  @IsString()
+  price?: string;
 
   @ApiPropertyOptional({
     description: 'Danh sách hình ảnh URL',
@@ -105,6 +104,10 @@ export class UpdateProductDto {
   @IsString()
   @IsOptional()
   warrantyPolicy?: string;
+
+  @ApiPropertyOptional({ description: 'Sản phẩm nổi bật' })
+  @IsOptional()
+  isFeatured?: boolean;
 
   @ApiPropertyOptional({ description: 'ID danh mục' })
   @IsOptional()

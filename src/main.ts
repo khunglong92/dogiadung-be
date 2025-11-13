@@ -15,10 +15,12 @@ async function bootstrap() {
     origin: allowedOrigins.length
       ? allowedOrigins
       : [
-          'http://localhost:7000',
-          'http://127.0.0.1:7000',
+          'http://localhost:3000',
+          'http://127.0.0.1:3000',
           'http://localhost:5173',
           'http://127.0.0.1:5173',
+          'http://localhost:3000',
+          'http://127.0.0.1:3000',
         ],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -42,7 +44,16 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
   const port = process.env.PORT ?? 8080;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
@@ -51,4 +62,4 @@ async function bootstrap() {
   );
 }
 
-bootstrap();
+void bootstrap();

@@ -1,6 +1,9 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import type { UploadApiOptions } from 'cloudinary';
+import sharp, { Sharp, Metadata } from 'sharp';
+import * as path from 'path';
+import * as fs from 'fs';
 
 type UploadStreamOut = { end: (buf: Buffer) => void };
 interface CloudinaryV2Safe {
@@ -10,11 +13,14 @@ interface CloudinaryV2Safe {
       options: UploadApiOptions,
       callback: (err: Error | null, res?: unknown) => void,
     ) => UploadStreamOut;
+    destroy: (
+      public_id: string,
+      callback: (err: Error | null, res?: { result: string }) => void,
+    ) => void;
   };
 }
 const cdn = cloudinary as unknown as CloudinaryV2Safe;
 
-// Cloudinary config: prefer CLOUDINARY_URL (cloudinary://<api_key>:<api_secret>@<cloud_name>)
 function ensureCloudinaryConfigured(): void {
   if (process.env.CLOUDINARY_URL) {
     cdn.config(process.env.CLOUDINARY_URL);
@@ -30,8 +36,29 @@ function ensureCloudinaryConfigured(): void {
 
 @Injectable()
 export class UploadService {
+  private logoBuffer: Buffer | null = null;
+
   constructor() {
     ensureCloudinaryConfigured();
+    this.loadLogo();
+  }
+
+  private loadLogo() {
+    // Path relative to project root, works in both dev and prod
+    const logoPath = path.join(
+      process.cwd(),
+      'src',
+      'images',
+      'logo không nền.png',
+    );
+    try {
+      this.logoBuffer = fs.readFileSync(logoPath);
+      console.log('✅ Logo loaded successfully from:', logoPath);
+    } catch (error) {
+      console.error('❌ Error loading logo file from:', logoPath);
+      console.error(error);
+      this.logoBuffer = null; // Ensure logoBuffer is null on failure
+    }
   }
 
   async uploadImage(
@@ -46,6 +73,8 @@ export class UploadService {
     format?: string;
   }> {
     try {
+      const watermarkedBuffer = await this.addWatermark(buffer);
+
       const result: unknown = await new Promise<unknown>((resolve, reject) => {
         const options: UploadApiOptions = { folder };
         const stream = cdn.uploader.upload_stream(options, (err, res) => {
@@ -63,7 +92,7 @@ export class UploadService {
           }
           resolve(res);
         });
-        stream.end(buffer);
+        stream.end(watermarkedBuffer);
       });
 
       const r = result as Record<string, unknown>;
@@ -86,6 +115,78 @@ export class UploadService {
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  private async addWatermark(buffer: Buffer): Promise<Buffer> {
+    if (!this.logoBuffer) {
+      console.log('Logo buffer is not loaded. Skipping watermark.');
+      return buffer;
+    }
+
+    try {
+      const image: Sharp = sharp(buffer);
+      const metadata: Metadata = await image.metadata();
+
+      if (!metadata.width || !metadata.height) {
+        console.error('Could not get image metadata. Skipping watermark.');
+        return buffer;
+      }
+
+      const logoWidth = Math.round(metadata.width * 0.2);
+      const resizedLogoBuffer: Buffer = await sharp(this.logoBuffer)
+        .resize({ width: logoWidth })
+        .toBuffer();
+
+      const resizedLogoMetadata: Metadata =
+        await sharp(resizedLogoBuffer).metadata();
+      if (!resizedLogoMetadata.width || !resizedLogoMetadata.height) {
+        console.error(
+          'Could not get resized logo metadata. Skipping watermark.',
+        );
+        return buffer;
+      }
+
+      const top = metadata.height - resizedLogoMetadata.height - 20;
+      const left = metadata.width - resizedLogoMetadata.width - 20;
+
+      return image
+        .composite([
+          {
+            input: resizedLogoBuffer,
+            top: top > 0 ? top : 0,
+            left: left > 0 ? left : 0,
+          },
+        ])
+        .toBuffer();
+    } catch (error) {
+      console.error('Error applying watermark:', error);
+      return buffer;
+    }
+  }
+
+  async deleteImage(public_id: string): Promise<{ result: string }> {
+    try {
+      return await new Promise((resolve, reject) => {
+        cdn.uploader.destroy(public_id, (err, res) => {
+          if (err) {
+            const msg =
+              typeof err === 'string'
+                ? err
+                : ((err as { message?: unknown })?.message ?? 'Delete error');
+            return reject(
+              new Error(typeof msg === 'string' ? msg : 'Delete error'),
+            );
+          }
+          if (!res || typeof res.result !== 'string') {
+            return reject(new Error('Empty delete response'));
+          }
+          resolve(res);
+        });
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
       throw new InternalServerErrorException(message);
     }
   }
