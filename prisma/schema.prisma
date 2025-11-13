@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  MANAGER
+}
+
+enum ServiceStatus {
+  draft
+  published
+  archived
+}
+
+enum ServiceThemeVariant {
+  light
+  dark
+  auto
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  email       String    @unique
+  password    String
+  role        UserRole
+  dateOfBirth String?   @map("date_of_birth")
+  avtUrl      String?   @map("avt_url") @db.VarChar(512)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@map("users")
+}
+
+model Category {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique @db.VarChar(255)
+  description     String?   @db.Text
+  updatedByUserId Int?      @map("updated_by_user_id")
+  updatedByName   String?   @map("updated_by_name") @db.VarChar(255)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(255)
+  description    Json?
+  technicalSpecs Json?     @map("technical_specs")
+  price          String?   @db.VarChar(255)
+  warrantyPolicy String?   @map("warranty_policy") @db.VarChar(255)
+  images         String[]
+  categoryId     Int       @map("category_id")
+  isFeatured     Boolean   @default(false) @map("is_featured")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  category       Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@map("products")
+}
+
+model Service {
+  id               String              @id @default(uuid())
+  slug             String              @unique @db.Text
+  title            String              @db.Text
+  subtitle         String?             @db.Text
+  shortDescription String              @map("short_description") @db.Text
+  content          String?             @db.Text
+  features         String?             @db.Text
+  technologies     String?             @db.Text
+  benefits         String?             @db.Text
+  customers        String?             @db.Text
+  imageUrls        String[]            @map("image_urls")
+  icon             String?
+  ctaLabel         String              @default("Liên hệ tư vấn") @map("cta_label")
+  ctaLink          String              @map("cta_link")
+  orderIndex       Int                 @default(0) @map("order_index")
+  tags             String[]
+  seoTitle         String?             @map("seo_title") @db.Text
+  seoDescription   String?             @map("seo_description") @db.Text
+  altText          String?             @map("alt_text")
+  status           ServiceStatus       @default(published)
+  themeVariant     ServiceThemeVariant @default(auto) @map("theme_variant")
+  isFeatured       Boolean             @default(false) @map("is_featured")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  @@map("services")
+}
+
+model ProductCategory {
+  id             String    @id @default(uuid())
+  name           String    @db.VarChar(255)
+  slug           String    @unique @db.VarChar(255)
+  description    String?   @db.Text
+  sampleProducts Json?     @map("sample_products")
+  contactPhone   String?   @map("contact_phone") @db.VarChar(50)
+  contactZalo    String?   @map("contact_zalo") @db.VarChar(255)
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@map("product_categories")
+}
+
+model ProjectCategory {
+  id          String    @id @default(uuid())
+  name        String    @db.VarChar(255)
+  slug        String    @unique @db.VarChar(255)
+  description String?   @db.Text
+  order       Int       @default(0)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  projects Project[]
+
+  @@map("project_categories")
+}
+
+model Project {
+  id             String    @id @default(uuid())
+  categoryId     String    @map("category_id")
+  name           String    @db.VarChar(255)
+  slug           String    @unique @db.VarChar(255)
+  description    String?   @db.Text
+  content        String?   @db.Text
+  location       String?   @db.VarChar(255)
+  completionDate String?   @map("completion_date")
+  image          String?   @db.VarChar(512)
+  gallery        Json?
+  isFeatured     Boolean   @default(false) @map("is_featured")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  category ProjectCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@map("projects")
+}
+
+model Contact {
+  id          String    @id @default(uuid())
+  name        String    @db.VarChar(255)
+  title       String    @db.VarChar(255)
+  phone       String?   @db.VarChar(20)
+  email       String?   @db.VarChar(255)
+  address     String?   @db.Text
+  content     String    @db.Text
+  isConfirmed Boolean   @default(false) @map("is_confirmed")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@map("contacts")
+}
