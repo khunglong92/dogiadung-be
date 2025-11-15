@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as dotenv from 'dotenv';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
+
 dotenv.config();
 
 @Injectable()
@@ -24,7 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Remove password before attaching to request user
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _password, ...safe } = user;
-    console.log('safe', safe);
     return safe;
   }
 }

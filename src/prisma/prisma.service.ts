@@ -6,14 +6,16 @@ import { PrismaClient } from '@prisma/client';
  */
 @Injectable()
 export class PrismaService
-  extends PrismaClient
+  extends PrismaClient<{
+    errorFormat: 'pretty';
+  }>
   implements OnModuleInit, OnModuleDestroy
 {
   async onModuleInit(): Promise<void> {
-    await this.$connect(); // ✅ KHÔNG cần ép kiểu
+    await this.$connect();
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.$disconnect(); // ✅ KHÔNG cần ép kiểu
+    await this.$disconnect();
   }
 }

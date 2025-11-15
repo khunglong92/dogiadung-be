@@ -61,6 +61,6 @@ export class UploadController {
   @ApiOperation({ summary: 'Xoá ảnh trên Cloudinary' })
   @ApiResponse({ status: 200, description: 'Xoá thành công' })
   async deleteImage(@Body(new ValidationPipe()) body: DeleteImageDto) {
-    return this.uploadService.deleteImage(body.public_id);
+    return this.uploadService.deleteImage(body.public_id ?? '');
   }
 }

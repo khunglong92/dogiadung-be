@@ -9,7 +9,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 class ForceDeleteDto {
-  type: 'category' | 'product';
+  type: 'category' | 'product' = 'category';
   id: number;
 }
 

@@ -45,12 +45,7 @@ export class UploadService {
 
   private loadLogo() {
     // Path relative to project root, works in both dev and prod
-    const logoPath = path.join(
-      process.cwd(),
-      'src',
-      'images',
-      'logo không nền.png',
-    );
+    const logoPath = path.join(process.cwd(), 'src', 'images', 'logo.png');
     try {
       this.logoBuffer = fs.readFileSync(logoPath);
       console.log('✅ Logo loaded successfully from:', logoPath);

@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 // Định nghĩa kiểu dữ liệu cho kết quả phân trang để code sạch hơn
 type PaginatedContactsResult = {

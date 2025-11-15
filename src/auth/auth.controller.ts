@@ -1,7 +1,7 @@
 import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { UsersService } from 'src/users/users.service';
+
 import {
   ApiTags,
   ApiOperation,
@@ -14,6 +14,7 @@ import {
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import dayjs from 'dayjs';
+import { UsersService } from '../users/users.service';
 
 class LoginResponse {
   access_token: string;

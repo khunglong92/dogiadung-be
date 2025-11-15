@@ -1,6 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import { MailService } from 'src/mail/mail.service';
+
 import { RegisterDto } from './dto/register.dto';
 import {
   Injectable,
@@ -9,6 +8,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { UsersService } from '../users/users.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -73,13 +74,15 @@ export class AuthService {
       this.logger.log(`Refresh token verified for email=${decoded.email}`);
       // Issue new tokens
       const payload = { sub: decoded.sub, email: decoded.email };
-      const accessExpiresIn = process.env.JWT_EXPIRES_IN ?? '15m';
-      const refreshExpiresIn = process.env.JWT_EXPIRES_IN ?? '7d';
+      const accessExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+      const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
       const access_token = this.jwtService.sign(payload, {
-        expiresIn: accessExpiresIn as unknown as number,
+        expiresIn: accessExpiresIn ? Number(accessExpiresIn) : 15 * 60,
       });
       const refresh_token = this.jwtService.sign(payload, {
-        expiresIn: refreshExpiresIn as unknown as number,
+        expiresIn: refreshExpiresIn
+          ? Number(refreshExpiresIn)
+          : 7 * 24 * 60 * 60,
       });
       return { access_token, refresh_token };
     } catch (error) {

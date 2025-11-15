@@ -8,8 +8,5 @@ export class DeleteImageDto {
   })
   @IsString()
   @IsNotEmpty()
-  public_id: string;
+  public_id?: string;
 }
-
-
-

@@ -7,27 +7,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // CORS configuration for frontend -> API calls
-  const allowedOrigins = (process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
   app.enableCors({
-    origin: allowedOrigins.length
-      ? allowedOrigins
-      : [
-          'http://localhost:3000',
-          'http://127.0.0.1:3000',
-          'http://localhost:5173',
-          'http://127.0.0.1:5173',
-          'http://localhost:3000',
-          'http://127.0.0.1:3000',
-        ],
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:4000',
+      'http://103.200.23.65:3000', // dev/local FE
+      'http://103.200.23.65:4000', // dev/local FE
+      'http://kimloaitamthienloc.vn', // production FE
+      'http://www.kimloaitamthienloc.vn',
+      'https://kimloaitamthienloc.vn', // production FE
+      'https://www.kimloaitamthienloc.vn',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Length'],
     credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
   });
 
   // Swagger configuration
@@ -54,8 +47,8 @@ async function bootstrap() {
       },
     }),
   );
-  const port = process.env.PORT ?? 8080;
-  await app.listen(port);
+  const port = process.env.PORT ?? 4000;
+  await app.listen(port, '0.0.0.0'); // bind tất cả IP
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(
     `Swagger documentation available at: http://localhost:${port}/api`,

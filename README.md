@@ -175,6 +175,9 @@ yarn db:migrate
 Migration `1762150000000-CreateProductsAndCategories.ts` sẽ tạo bảng `categories`, `products` và seed sẵn 4 danh mục.
 
 ---
+###  run db info
+npx prisma studio
+
 
 ### Migrate quickstart (TL;DR)
 

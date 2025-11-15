@@ -12,6 +12,7 @@ import { ProductCategoriesModule } from './product-categories/product-categories
 import { ProjectsModule } from './projects/projects.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { ContactInfoModule } from './contact-info/contact-info.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ContactsModule } from './contacts/contacts.module';
     ProductCategoriesModule,
     ProjectsModule,
     ContactsModule,
+    ContactInfoModule,
   ],
   controllers: [AppController, ForceDeleteController],
   providers: [AppService],
