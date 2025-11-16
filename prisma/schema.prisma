@@ -37,6 +37,8 @@ model User {
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
 
+  productLikes ProductLike[]
+
   @@map("users")
 }
 
@@ -56,19 +58,21 @@ model Category {
 }
 
 model Product {
-  id             Int       @id @default(autoincrement())
-  name           String    @db.VarChar(255)
+  id             Int           @id @default(autoincrement())
+  name           String        @db.VarChar(255)
   description    Json?
-  technicalSpecs Json?     @map("technical_specs")
-  price          String?   @db.VarChar(255)
-  warrantyPolicy String?   @map("warranty_policy") @db.VarChar(255)
+  technicalSpecs Json?         @map("technical_specs")
+  price          String?       @db.VarChar(255)
+  warrantyPolicy String?       @map("warranty_policy") @db.VarChar(255)
   images         String[]
-  categoryId     Int       @map("category_id")
-  isFeatured     Boolean   @default(false) @map("is_featured")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
-  category       Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryId     Int           @map("category_id")
+  isFeatured     Boolean       @default(false) @map("is_featured")
+  likes          Int           @default(100)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+  category       Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  productLikes   ProductLike[]
 
   @@map("products")
 }
@@ -173,15 +177,37 @@ model Contact {
 }
 
 model ContactInfo {
-  id             String   @id @default(uuid())
-  companyName    String   @map("company_name") @db.VarChar(255)
-  address        String   @db.Text
-  phone          String   @db.VarChar(50)
-  email          String   @db.VarChar(255)
-  workingHours   String   @map("working_hours") @db.VarChar(255)
-  googleMapUrl   String?  @map("google_map_url") @db.Text
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  companyName       String    @map("company_name") @db.VarChar(255)
+  address           String    @db.Text
+  phone             String    @db.VarChar(50)
+  email             String    @db.VarChar(255)
+  workingHours      String    @map("working_hours") @db.VarChar(255)
+  googleMapUrl      String?   @map("google_map_url") @db.Text
+  foundingDate      DateTime? @map("founding_date")
+  companyType       String?   @map("company_type") @db.VarChar(255)
+  aboutUs           String?   @map("about_us") @db.Text
+  yearsOfExperience Int?      @map("years_of_experience")
+  projectsCompleted Int?      @map("projects_completed")
+  satisfiedClients  Int?      @map("satisfied_clients")
+  satisfactionRate  Int?      @map("satisfaction_rate")
+  mission           String?   @db.Text
+  vision            String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@map("contact_info")
+}
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  productId Int      @map("product_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@map("product_likes")
 }

@@ -8,7 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -132,5 +135,48 @@ export class ProductsController {
   @ApiResponse({ status: 204, description: 'Xoá thành công' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.productsService.remove(id);
+  }
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Thích một sản phẩm' })
+  @ApiResponse({
+    status: 201,
+    description: 'Sản phẩm đã được thích thành công',
+  })
+  @ApiResponse({ status: 400, description: 'Bạn đã thích sản phẩm này rồi' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy sản phẩm' })
+  likeProduct(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const userId = req.user.id; // Lấy userId từ token đã xác thực
+    return this.productsService.likeProduct(id, userId);
+  }
+
+  @Delete(':id/unlike')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bỏ thích một sản phẩm' })
+  @ApiResponse({ status: 200, description: 'Đã bỏ thích sản phẩm thành công' })
+  @ApiResponse({ status: 400, description: 'Bạn chưa thích sản phẩm này' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy sản phẩm' })
+  unlikeProduct(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const userId = req.user.id;
+    return this.productsService.unlikeProduct(id, userId);
+  }
+
+  @Get(':id/like-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Kiểm tra người dùng hiện tại đã thích sản phẩm chưa',
+  })
+  @ApiResponse({ status: 200, description: 'Trả về trạng thái boolean' })
+  async checkUserLiked(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: any,
+  ): Promise<{ liked: boolean }> {
+    const userId = req.user.id;
+    const liked = await this.productsService.checkUserLiked(id, userId);
+    return { liked };
   }
 }

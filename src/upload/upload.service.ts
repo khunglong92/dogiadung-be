@@ -1,45 +1,24 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { v2 as cloudinary } from 'cloudinary';
-import type { UploadApiOptions } from 'cloudinary';
+import {
+  Injectable,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import sharp, { Sharp, Metadata } from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
-type UploadStreamOut = { end: (buf: Buffer) => void };
-interface CloudinaryV2Safe {
-  config: (opts: unknown) => void;
-  uploader: {
-    upload_stream: (
-      options: UploadApiOptions,
-      callback: (err: Error | null, res?: unknown) => void,
-    ) => UploadStreamOut;
-    destroy: (
-      public_id: string,
-      callback: (err: Error | null, res?: { result: string }) => void,
-    ) => void;
-  };
-}
-const cdn = cloudinary as unknown as CloudinaryV2Safe;
-
-function ensureCloudinaryConfigured(): void {
-  if (process.env.CLOUDINARY_URL) {
-    cdn.config(process.env.CLOUDINARY_URL);
-    return;
-  }
-  const cloud_name = process.env.CLOUDINARY_CLOUD_NAME;
-  const api_key = process.env.CLOUDINARY_API_KEY;
-  const api_secret = process.env.CLOUDINARY_API_SECRET;
-  if (cloud_name && api_key && api_secret) {
-    cdn.config({ cloud_name, api_key, api_secret });
-  }
-}
+// Constants
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const ALLOWED_IMAGE_TYPES = ['jpeg', 'jpg', 'png', 'webp'];
+// const UPLOAD_BASE_PATH = '/var/www/uploads';
+const UPLOAD_BASE_PATH = process.env.UPLOAD_BASE_PATH || '/var/www/uploads';
 
 @Injectable()
 export class UploadService {
   private logoBuffer: Buffer | null = null;
 
   constructor() {
-    ensureCloudinaryConfigured();
     this.loadLogo();
   }
 
@@ -59,6 +38,8 @@ export class UploadService {
   async uploadImage(
     buffer: Buffer,
     folder?: string,
+    entityName?: string,
+    existingPublicId?: string,
   ): Promise<{
     url: string;
     public_id: string;
@@ -68,49 +49,93 @@ export class UploadService {
     format?: string;
   }> {
     try {
-      const watermarkedBuffer = await this.addWatermark(buffer);
+      if (!process.env.PUBLIC_BASE_URL) {
+        throw new InternalServerErrorException(
+          'PUBLIC_BASE_URL is not configured',
+        );
+      }
 
-      const result: unknown = await new Promise<unknown>((resolve, reject) => {
-        const options: UploadApiOptions = { folder };
-        const stream = cdn.uploader.upload_stream(options, (err, res) => {
-          if (err) {
-            const msg =
-              typeof err === 'string'
-                ? err
-                : ((err as { message?: unknown })?.message ?? 'Upload error');
-            return reject(
-              new Error(typeof msg === 'string' ? msg : 'Upload error'),
-            );
-          }
-          if (!res || typeof res !== 'object') {
-            return reject(new Error('Empty upload response'));
-          }
-          resolve(res);
-        });
-        stream.end(watermarkedBuffer);
-      });
+      // Validate file size
+      if (buffer.length > MAX_FILE_SIZE) {
+        throw new BadRequestException(
+          `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+        );
+      }
 
-      const r = result as Record<string, unknown>;
-      const secureUrl =
-        typeof r.secure_url === 'string' ? r.secure_url : undefined;
-      const url = typeof r.url === 'string' ? r.url : undefined;
-      const public_id = typeof r.public_id === 'string' ? r.public_id : '';
-      const width = typeof r.width === 'number' ? r.width : undefined;
-      const height = typeof r.height === 'number' ? r.height : undefined;
-      const bytes = typeof r.bytes === 'number' ? r.bytes : undefined;
-      const format = typeof r.format === 'string' ? r.format : undefined;
+      // Convert image to a standard format (jpg) if needed
+      let format: string;
+      let processedBuffer: Buffer;
+
+      const metadata: Metadata = await sharp(buffer).metadata();
+      const originalFormat = metadata.format;
+
+      if (!originalFormat || !ALLOWED_IMAGE_TYPES.includes(originalFormat)) {
+        // Nếu format không hợp lệ, convert sang JPG
+        processedBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+        format = 'jpg';
+      } else {
+        // Nếu hợp lệ, giữ nguyên
+        processedBuffer = buffer;
+        format = originalFormat;
+      }
+
+      // Thêm watermark
+      processedBuffer = await this.addWatermark(processedBuffer);
+
+      const width = metadata.width;
+      const height = metadata.height;
+
+      // Handle update case - reuse existing filename
+      let filename: string;
+      let public_id: string;
+      let mainFolder: string;
+      let subFolderPath: string;
+
+      if (existingPublicId) {
+        public_id = existingPublicId;
+        filename = path.basename(existingPublicId);
+        const folderPath = path.dirname(existingPublicId);
+        mainFolder = folderPath.split('/')[0] || 'images';
+        subFolderPath = folderPath;
+      } else {
+        filename = `${uuidv4()}.${format}`;
+        mainFolder = folder || 'images';
+        subFolderPath = entityName ? `${mainFolder}/${entityName}` : mainFolder;
+        public_id = `${subFolderPath}/${filename}`;
+      }
+
+      // Save to local filesystem
+      const fullPath = path.join(UPLOAD_BASE_PATH, public_id);
+      await this.saveToLocal(processedBuffer, fullPath);
+
+      // Construct public URL
+      const url = `${process.env.PUBLIC_BASE_URL}/uploads/${public_id}`;
 
       return {
-        url: secureUrl || url || '',
+        url,
         public_id,
         width,
         height,
-        bytes,
+        bytes: processedBuffer.length,
         format,
       };
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       const message = err instanceof Error ? err.message : 'Upload failed';
       throw new InternalServerErrorException(message);
+    }
+  }
+
+  private async saveToLocal(buffer: Buffer, fullPath: string): Promise<void> {
+    try {
+      // Create directory recursively if it doesn't exist
+      await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
+      // Write the file
+      await fs.promises.writeFile(fullPath, buffer);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to save file locally: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -163,26 +188,42 @@ export class UploadService {
 
   async deleteImage(public_id: string): Promise<{ result: string }> {
     try {
-      return await new Promise((resolve, reject) => {
-        cdn.uploader.destroy(public_id, (err, res) => {
-          if (err) {
-            const msg =
-              typeof err === 'string'
-                ? err
-                : ((err as { message?: unknown })?.message ?? 'Delete error');
-            return reject(
-              new Error(typeof msg === 'string' ? msg : 'Delete error'),
-            );
-          }
-          if (!res || typeof res.result !== 'string') {
-            return reject(new Error('Empty delete response'));
-          }
-          resolve(res);
-        });
-      });
+      const fullPath = path.join(UPLOAD_BASE_PATH, public_id);
+
+      // Delete the file
+      await fs.promises.unlink(fullPath);
+
+      // Delete empty folders recursively
+      await this.deleteEmptyLocalFolder(path.dirname(fullPath));
+
+      return { result: 'ok' };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Delete failed';
       throw new InternalServerErrorException(message);
+    }
+  }
+
+  private async deleteEmptyLocalFolder(folder: string): Promise<void> {
+    try {
+      // Don't delete the base upload folder
+      while (folder !== UPLOAD_BASE_PATH) {
+        const files = await fs.promises.readdir(folder);
+
+        // If folder is not empty, stop
+        if (files.length > 0) {
+          break;
+        }
+
+        // Delete empty folder
+        await fs.promises.rmdir(folder);
+        console.log(`✅ Deleted empty folder: ${folder}`);
+
+        // Move to parent folder
+        folder = path.dirname(folder);
+      }
+    } catch (error) {
+      // Don't throw error if we can't delete empty folders
+      console.warn('Error checking/deleting empty folder:', error);
     }
   }
 }

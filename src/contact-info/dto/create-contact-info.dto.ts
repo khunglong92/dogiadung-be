@@ -50,4 +50,80 @@ export class CreateContactInfoDto {
   @IsOptional()
   @IsString()
   googleMapUrl?: string;
+
+  @ApiProperty({
+    description: 'Ngày thành lập',
+    example: '2023-11-15T10:00:00.000Z',
+    required: false,
+  })
+  @IsOptional()
+  foundingDate?: Date;
+
+  @ApiProperty({
+    description: 'Loại hình công ty',
+    example: 'Công ty TNHH',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  companyType?: string;
+
+  @ApiProperty({
+    description: 'Giới thiệu chung',
+    example: 'Chúng tôi là công ty hàng đầu...',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  aboutUs?: string;
+
+  @ApiProperty({
+    description: 'Số năm kinh nghiệm',
+    example: 10,
+    required: false,
+  })
+  @IsOptional()
+  yearsOfExperience?: number;
+
+  @ApiProperty({
+    description: 'Số dự án hoàn thành',
+    example: 100,
+    required: false,
+  })
+  @IsOptional()
+  projectsCompleted?: number;
+
+  @ApiProperty({
+    description: 'Số lượng khách hàng tin tưởng',
+    example: 500,
+    required: false,
+  })
+  @IsOptional()
+  satisfiedClients?: number;
+
+  @ApiProperty({
+    description: 'Mức độ hài lòng (%)',
+    example: 98,
+    required: false,
+  })
+  @IsOptional()
+  satisfactionRate?: number;
+
+  @ApiProperty({
+    description: 'Sứ mệnh',
+    example: 'Mang lại giá trị tốt nhất cho khách hàng.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  mission?: string;
+
+  @ApiProperty({
+    description: 'Tầm nhìn',
+    example: 'Trở thành tập đoàn hàng đầu trong lĩnh vực...',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  vision?: string;
 }

@@ -1,4 +1,4 @@
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 import { RegisterDto } from './dto/register.dto';
 import {
@@ -51,15 +51,14 @@ export class AuthService {
   login(user: { email: string }) {
     this.logger.log(`Login success, issuing token: email=${user.email}`);
     const payload = { sub: user.email, email: user.email };
-    const accessExpiresIn = process.env.JWT_EXPIRES_IN ?? '15m';
-    const refreshExpiresIn = process.env.JWT_EXPIRES_IN ?? '7d';
+    const accessExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const access_token = this.jwtService.sign(payload, {
-      // Cast to satisfy strict typings of expiresIn (number | StringValue)
-      expiresIn: accessExpiresIn as unknown as number,
-    });
+      expiresIn: accessExpiresIn,
+    } as JwtSignOptions);
     const refresh_token = this.jwtService.sign(payload, {
-      expiresIn: refreshExpiresIn as unknown as number,
-    });
+      expiresIn: refreshExpiresIn,
+    } as JwtSignOptions);
     return { access_token, refresh_token };
   }
 
@@ -77,13 +76,11 @@ export class AuthService {
       const accessExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
       const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
       const access_token = this.jwtService.sign(payload, {
-        expiresIn: accessExpiresIn ? Number(accessExpiresIn) : 15 * 60,
-      });
+        expiresIn: accessExpiresIn,
+      } as JwtSignOptions);
       const refresh_token = this.jwtService.sign(payload, {
-        expiresIn: refreshExpiresIn
-          ? Number(refreshExpiresIn)
-          : 7 * 24 * 60 * 60,
-      });
+        expiresIn: refreshExpiresIn,
+      } as JwtSignOptions);
       return { access_token, refresh_token };
     } catch (error) {
       this.logger.warn(
