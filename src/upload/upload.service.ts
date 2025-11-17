@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFolder } from './dto/upload.dto';
-
+import slugify from 'slugify';
 // Constants
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 const ALLOWED_IMAGE_TYPES = ['jpeg', 'jpg', 'png', 'webp'];
@@ -92,12 +92,22 @@ export class UploadService {
       const mainFolder = folder || UploadFolder.GENERAL;
 
       let subFolderPath: string;
-      if (mainFolder === UploadFolder.PRODUCTS && categoryId && entityName) {
+      const safeEntityName = entityName
+        ? slugify(entityName, { lower: true, strict: true })
+        : undefined;
+
+      if (
+        mainFolder === UploadFolder.PRODUCTS &&
+        categoryId &&
+        safeEntityName
+      ) {
         // Cấu trúc đặc biệt cho products: products/{categoryId}/{productName}
-        subFolderPath = `${mainFolder}/${categoryId}/${entityName}`;
+        subFolderPath = `${mainFolder}/${categoryId}/${safeEntityName}`;
       } else {
         // Cấu trúc mặc định: folder/{entityName}
-        subFolderPath = entityName ? `${mainFolder}/${entityName}` : mainFolder;
+        subFolderPath = safeEntityName
+          ? `${mainFolder}/${safeEntityName}`
+          : mainFolder;
       }
       const public_id = `${subFolderPath}/${filename}`;
 
