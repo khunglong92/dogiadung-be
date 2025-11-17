@@ -7,6 +7,7 @@ import sharp, { Sharp, Metadata } from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadFolder } from './dto/upload.dto';
 
 // Constants
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -37,9 +38,9 @@ export class UploadService {
 
   async uploadImage(
     buffer: Buffer,
-    folder?: string,
+    folder?: UploadFolder,
+    categoryId?: number,
     entityName?: string,
-    existingPublicId?: string,
   ): Promise<{
     url: string;
     public_id: string;
@@ -86,23 +87,19 @@ export class UploadService {
       const height = metadata.height;
 
       // Handle update case - reuse existing filename
-      let filename: string;
-      let public_id: string;
-      let mainFolder: string;
-      let subFolderPath: string;
+      // Khi tạo mới, áp dụng logic cấu trúc thư mục
+      const filename = `${uuidv4()}.${format}`;
+      const mainFolder = folder || UploadFolder.GENERAL;
 
-      if (existingPublicId) {
-        public_id = existingPublicId;
-        filename = path.basename(existingPublicId);
-        const folderPath = path.dirname(existingPublicId);
-        mainFolder = folderPath.split('/')[0] || 'images';
-        subFolderPath = folderPath;
+      let subFolderPath: string;
+      if (mainFolder === UploadFolder.PRODUCTS && categoryId && entityName) {
+        // Cấu trúc đặc biệt cho products: products/{categoryId}/{productName}
+        subFolderPath = `${mainFolder}/${categoryId}/${entityName}`;
       } else {
-        filename = `${uuidv4()}.${format}`;
-        mainFolder = folder || 'images';
+        // Cấu trúc mặc định: folder/{entityName}
         subFolderPath = entityName ? `${mainFolder}/${entityName}` : mainFolder;
-        public_id = `${subFolderPath}/${filename}`;
       }
+      const public_id = `${subFolderPath}/${filename}`;
 
       // Save to local filesystem
       const fullPath = path.join(UPLOAD_BASE_PATH, public_id);
