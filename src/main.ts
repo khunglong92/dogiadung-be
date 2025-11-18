@@ -19,7 +19,7 @@ async function bootstrap() {
       'https://kimloaitamthienloc.vn', // production FE
       'https://www.kimloaitamthienloc.vn',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
   });

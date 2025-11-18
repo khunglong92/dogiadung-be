@@ -4,6 +4,7 @@ import {
   ServiceThemeVariant,
   Category,
 } from '@prisma/client';
+import { servicesSeedData } from './services-seed-data';
 import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
@@ -128,159 +129,12 @@ async function main() {
   }
   console.log(`✅ Đã tạo ${totalProducts} products\n`);
 
-  // 3. Seed Services (20 records)
+  // 3. Seed Services
   console.log('⚡ Tạo Services...');
-  const serviceData = [
-    {
-      title: 'Thi công hệ thống điện dân dụng',
-      icon: '🏠',
-      keywords: ['house', 'construction', 'electric'],
-    },
-    {
-      title: 'Lắp đặt hệ thống điện công nghiệp',
-      icon: '🏭',
-      keywords: ['factory', 'industrial', 'machine'],
-    },
-    {
-      title: 'Bảo trì và sửa chữa điện',
-      icon: '🔧',
-      keywords: ['repair', 'maintenance', 'tools'],
-    },
-    {
-      title: 'Tư vấn thiết kế hệ thống điện',
-      icon: '📋',
-      keywords: ['blueprint', 'design', 'consulting'],
-    },
-    {
-      title: 'Lắp đặt hệ thống điện mặt trời',
-      icon: '☀️',
-      keywords: ['solar', 'panel', 'energy'],
-    },
-    {
-      title: 'Hệ thống chiếu sáng thông minh',
-      icon: '💡',
-      keywords: ['smart', 'home', 'light'],
-    },
-    {
-      title: 'Lắp đặt camera an ninh',
-      icon: '📹',
-      keywords: ['cctv', 'security', 'camera'],
-    },
-    {
-      title: 'Hệ thống báo cháy tự động',
-      icon: '🚨',
-      keywords: ['fire', 'alarm', 'safety'],
-    },
-    {
-      title: 'Thi công hệ thống điện nhẹ',
-      icon: '🌐',
-      keywords: ['internet', 'network', 'cable'],
-    },
-    {
-      title: 'Kiểm định an toàn điện',
-      icon: '✅',
-      keywords: ['inspection', 'safety', 'certificate'],
-    },
-    {
-      title: 'Lắp đặt tủ điện phân phối',
-      icon: '📦',
-      keywords: ['panel', 'distribution', 'box'],
-    },
-    {
-      title: 'Hệ thống chống sét',
-      icon: '🌩️',
-      keywords: ['lightning', 'protection', 'storm'],
-    },
-    {
-      title: 'Cung cấp vật tư điện',
-      icon: '🛒',
-      keywords: ['supply', 'store', 'equipment'],
-    },
-    {
-      title: 'Sửa chữa thiết bị điện gia dụng',
-      icon: '🛠️',
-      keywords: ['appliance', 'repair', 'home'],
-    },
-    {
-      title: 'Tối ưu hóa hệ thống điện',
-      icon: '⚙️',
-      keywords: ['optimization', 'efficiency', 'power'],
-    },
-    {
-      title: 'Thi công điện cho tòa nhà văn phòng',
-      icon: '🏢',
-      keywords: ['office', 'building', 'commercial'],
-    },
-    {
-      title: 'Hệ thống điện cho khách sạn',
-      icon: '🏨',
-      keywords: [
-        'hotel',
-        'hospital[object Object]smart home',
-        'iot',
-        'automation',
-      ],
-    },
-    {
-      title: 'Thi công điện cho nhà hàng',
-      icon: '🍽️',
-      keywords: ['restaurant', 'kitchen', 'lighting'],
-    },
-    {
-      title: 'Hệ thống điện dự phòng (UPS)',
-      icon: '🔋',
-      keywords: ['ups', 'battery', 'backup'],
-    },
-  ];
-
-  for (let i = 0; i < serviceData.length; i++) {
-    const data = serviceData[i];
-    const slug = createSlug(data.title);
-
-    await prisma.service.create({
-      data: {
-        slug: `${slug}-${faker.string.alphanumeric(4)}`,
-        title: data.title,
-        subtitle: faker.company.catchPhrase(),
-        shortDescription: faker.lorem.sentences(3),
-        content: faker.lorem.paragraphs(8),
-        features: JSON.stringify(
-          Array.from({ length: 4 }, () => faker.lorem.sentence()),
-        ),
-        technologies: JSON.stringify(
-          Array.from({ length: 3 }, () => faker.company.buzzPhrase()),
-        ),
-        benefits: JSON.stringify([
-          'Tiết kiệm chi phí',
-          'An toàn tuyệt đối',
-          'Bảo hành dài hạn',
-          'Hỗ trợ 24/7',
-        ]),
-        customers: JSON.stringify(
-          Array.from({ length: 3 }, () => faker.company.name()),
-        ),
-        imageUrls: [getImageUrl(data.keywords), getImageUrl(data.keywords)],
-        icon: data.icon,
-        ctaLabel: 'Yêu cầu tư vấn',
-        ctaLink: '/lien-he',
-        orderIndex: i,
-        tags: [faker.commerce.department(), faker.commerce.department()],
-        seoTitle: `${data.title} - Dịch vụ chuyên nghiệp`,
-        seoDescription: faker.lorem.sentences(2),
-        altText: data.title,
-        status: faker.helpers.arrayElement<ServiceStatus>([
-          'published',
-          'draft',
-        ]),
-        themeVariant: faker.helpers.arrayElement<ServiceThemeVariant>([
-          'light',
-          'dark',
-        ]),
-        isFeatured: faker.datatype.boolean(0.4), // 40% chance
-      },
-    });
+  for (const service of servicesSeedData) {
+    await prisma.service.create({ data: service });
   }
-  console.log(`✅ Đã tạo ${serviceData.length} services\n`);
+  console.log(`✅ Đã tạo ${servicesSeedData.length} services\n`);
 
   // ... (Các phần seed khác giữ nguyên)
   console.log('🎉 Hoàn thành seed dữ liệu!\n');

@@ -7,7 +7,6 @@ import sharp, { Sharp, Metadata } from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { UploadFolder } from './dto/upload.dto';
 import slugify from 'slugify';
 // Constants
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -38,7 +37,7 @@ export class UploadService {
 
   async uploadImage(
     buffer: Buffer,
-    folder?: UploadFolder,
+    folder?: string,
     categoryId?: number,
     entityName?: string,
   ): Promise<{
@@ -89,18 +88,14 @@ export class UploadService {
       // Handle update case - reuse existing filename
       // Khi tạo mới, áp dụng logic cấu trúc thư mục
       const filename = `${uuidv4()}.${format}`;
-      const mainFolder = folder || UploadFolder.GENERAL;
+      const mainFolder = folder || 'general';
 
       let subFolderPath: string;
       const safeEntityName = entityName
         ? slugify(entityName, { lower: true, strict: true })
         : undefined;
 
-      if (
-        mainFolder === UploadFolder.PRODUCTS &&
-        categoryId &&
-        safeEntityName
-      ) {
+      if (mainFolder === 'products' && categoryId && safeEntityName) {
         // Cấu trúc đặc biệt cho products: products/{categoryId}/{productName}
         subFolderPath = `${mainFolder}/${categoryId}/${safeEntityName}`;
       } else {
@@ -195,16 +190,32 @@ export class UploadService {
 
   async deleteImage(public_id: string): Promise<{ result: string }> {
     try {
+      // Validate public_id to prevent path traversal attacks
+      if (public_id.includes('..') || path.isAbsolute(public_id)) {
+        throw new BadRequestException('Invalid public_id format');
+      }
+
       const fullPath = path.join(UPLOAD_BASE_PATH, public_id);
+
+      // Check if file exists
+      try {
+        await fs.promises.access(fullPath);
+      } catch {
+        throw new BadRequestException(
+          `Image not found at path: ${public_id}. Make sure to provide the full path including folder (e.g., "products/1/product-name/image.jpg")`,
+        );
+      }
 
       // Delete the file
       await fs.promises.unlink(fullPath);
+      console.log(`✅ Deleted image: ${public_id}`);
 
       // Delete empty folders recursively
       await this.deleteEmptyLocalFolder(path.dirname(fullPath));
 
       return { result: 'ok' };
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       const message = err instanceof Error ? err.message : 'Delete failed';
       throw new InternalServerErrorException(message);
     }

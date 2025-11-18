@@ -32,25 +32,29 @@ export class CreateServiceDto {
   @IsNotEmpty()
   short_description: string;
 
-  @ApiPropertyOptional({ description: 'Nội dung chi tiết' })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Nội dung chi tiết (mảng các đoạn văn)' })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  content?: string;
+  content?: string[];
 
-  @ApiPropertyOptional({ description: 'Danh sách các đặc điểm nổi bật' })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Danh sách các đặc điểm nổi bật (mảng)' })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  features?: string;
+  features?: string[];
 
-  @ApiPropertyOptional({ description: 'Danh sách công nghệ / thiết bị' })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Danh sách công nghệ / thiết bị (mảng)' })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  technologies?: string;
+  technologies?: string[];
 
-  @ApiPropertyOptional({ description: 'Lợi ích dành cho khách hàng' })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Lợi ích dành cho khách hàng (mảng)' })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  benefits?: string;
+  benefits?: string[];
 
   @ApiPropertyOptional({ description: 'Nhóm khách hàng mục tiêu' })
   @IsString()
@@ -63,6 +67,14 @@ export class CreateServiceDto {
   @IsUrl({}, { each: true })
   @IsOptional()
   image_urls?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Danh sách mô tả alt cho ảnh (tương ứng với image_urls)',
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  image_alts?: string[];
 
   @ApiPropertyOptional({ description: 'Icon đại diện' })
   @IsString()
@@ -81,6 +93,14 @@ export class CreateServiceDto {
   @IsString()
   @IsNotEmpty()
   cta_link: string;
+
+  @ApiPropertyOptional({
+    description: 'Target của CTA (_blank hoặc _self)',
+    example: '_blank',
+  })
+  @IsString()
+  @IsOptional()
+  cta_target?: string;
 
   @ApiPropertyOptional({ description: 'Thứ tự hiển thị', default: 0 })
   @IsInt()

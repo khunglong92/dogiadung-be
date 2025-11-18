@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsOptional, IsString, Matches } from 'class-validator';
 
 export enum UploadFolder {
   PRODUCTS = 'products',
@@ -10,10 +10,13 @@ export enum UploadFolder {
 
 export class UploadDto {
   @ApiPropertyOptional({
-    description: 'Folder to save the image in',
-    enum: UploadFolder,
+    description: 'Folder to save the image in (e.g., products, services, categories, or any custom folder name)',
+    example: 'products',
   })
-  @IsEnum(UploadFolder)
+  @IsString()
   @IsOptional()
-  folder?: UploadFolder;
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message: 'Folder name can only contain letters, numbers, hyphens, and underscores',
+  })
+  folder?: string;
 }

@@ -88,7 +88,7 @@ export class ContactsService {
     await this.findOne(id); // Đảm bảo liên hệ tồn tại
     return await this.prisma.contact.update({
       where: { id },
-      data: { isConfirmed: updateContactDto.isConfirmed },
+      data: { isConfirmed: !!updateContactDto.isConfirmed },
     });
   }
 

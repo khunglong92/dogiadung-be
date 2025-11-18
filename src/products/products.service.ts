@@ -49,6 +49,7 @@ export class ProductsService {
         description: descriptionObj as Prisma.InputJsonValue,
         images: createDto.images || [],
         price: createDto.price ?? null,
+        warrantyPolicy: createDto.warrantyPolicy ?? null,
         technicalSpecs: technicalSpecsObj as Prisma.InputJsonValue,
         categoryId: createDto.categoryId,
         isFeatured: createDto.isFeatured ?? false,
@@ -160,6 +161,9 @@ export class ProductsService {
           technicalSpecs: technicalSpecsObj as Prisma.InputJsonValue,
         }),
         ...(updateDto.price !== undefined && { price: updateDto.price }),
+        ...(updateDto.warrantyPolicy !== undefined && {
+          warrantyPolicy: updateDto.warrantyPolicy,
+        }),
         ...(updateDto.images !== undefined && { images: updateDto.images }),
         ...(updateDto.isFeatured !== undefined && {
           isFeatured: updateDto.isFeatured,

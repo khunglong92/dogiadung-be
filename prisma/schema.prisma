@@ -83,15 +83,17 @@ model Service {
   title            String              @db.Text
   subtitle         String?             @db.Text
   shortDescription String              @map("short_description") @db.Text
-  content          String?             @db.Text
-  features         String?             @db.Text
-  technologies     String?             @db.Text
-  benefits         String?             @db.Text
+  content          String[]            @db.Text
+  features         String[]            @db.Text
+  technologies     String[]            @db.Text
+  benefits         String[]            @db.Text
   customers        String?             @db.Text
   imageUrls        String[]            @map("image_urls")
+  imageAlts        String[]            @map("image_alts")
   icon             String?
   ctaLabel         String              @default("Liên hệ tư vấn") @map("cta_label")
   ctaLink          String              @map("cta_link")
+  ctaTarget        String?             @map("cta_target")
   orderIndex       Int                 @default(0) @map("order_index")
   tags             String[]
   seoTitle         String?             @map("seo_title") @db.Text
