@@ -52,6 +52,7 @@ async function bootstrap() {
     '/uploads',
     express.static(process.env.UPLOAD_BASE_PATH || '/var/www/uploads'),
   );
+  app.setGlobalPrefix('api');
   const port = process.env.PORT ?? 4000;
   await app.listen(port, '0.0.0.0'); // bind tất cả IP
   console.log(`Application is running on: http://localhost:${port}`);
