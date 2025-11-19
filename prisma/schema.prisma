@@ -178,6 +178,31 @@ model Contact {
   @@map("contacts")
 }
 
+model Quote {
+  id                    String   @id @default(uuid())
+  name                  String   @db.VarChar(255)
+  email                 String?  @db.VarChar(255)
+  phone                 String   @db.VarChar(20)
+  company               String?  @db.VarChar(255)
+  address               String?  @db.Text
+  title                 String?  @db.VarChar(255)
+  projectName           String   @map("project_name") @db.VarChar(255)
+  projectType           String   @map("project_type") @db.VarChar(255)
+  projectDescription    String   @map("project_description") @db.Text
+  budget                String?  @db.VarChar(255)
+  expectedCompletion    String?  @map("expected_completion") @db.VarChar(255)
+  technicalRequirements String?  @map("technical_requirements") @db.Text
+  content               String   @db.Text
+  subject               String   @db.VarChar(255) @default("quote")
+  attachmentUrl         String?  @map("attachment_url") @db.Text
+  isConfirmed           Boolean  @default(false) @map("is_confirmed")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  @@map("quotes")
+}
+
 model ContactInfo {
   id                String    @id @default(uuid())
   companyName       String    @map("company_name") @db.VarChar(255)

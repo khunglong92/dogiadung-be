@@ -10,11 +10,11 @@ export class ProjectCategoriesService {
   create(dto: CreateProjectCategoryDto) {
     return this.prisma.projectCategory.create({
       data: {
-      name: dto.name,
-      slug: dto.slug,
-      description: dto.description,
-      order: dto.order ?? 0,
-      isActive: dto.isActive ?? true,
+        name: dto.name,
+        slug: dto.slug,
+        description: dto.description,
+        order: dto.order ?? 0,
+        isActive: dto.isActive ?? true,
       },
     });
   }

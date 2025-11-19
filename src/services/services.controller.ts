@@ -71,8 +71,8 @@ export class ServicesController {
     const p = Number(page) > 0 ? Number(page) : 1;
     const pp =
       Number(perpage) > 0 && Number(perpage) <= 100 ? Number(perpage) : 10;
-      const result = await this.servicesService.findAll(p, pp, status);
-      return result;
+    const result = await this.servicesService.findAll(p, pp, status);
+    return result;
   }
 
   @Get('featured')

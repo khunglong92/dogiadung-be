@@ -24,6 +24,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:clear": "ts-node prisma/clear-seed.ts",
+    "prisma:reset:products-services": "tsx prisma/reset-products-services.ts",
     "db:push": "prisma db push",
     "db:pull": "prisma db pull"
   },

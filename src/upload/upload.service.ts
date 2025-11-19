@@ -14,6 +14,10 @@ const ALLOWED_IMAGE_TYPES = ['jpeg', 'jpg', 'png', 'webp'];
 // const UPLOAD_BASE_PATH = '/var/www/uploads';
 const UPLOAD_BASE_PATH = process.env.UPLOAD_BASE_PATH || '/var/www/uploads';
 
+type UploadOptions = {
+  skipWatermark?: boolean;
+};
+
 @Injectable()
 export class UploadService {
   private logoBuffer: Buffer | null = null;
@@ -40,6 +44,7 @@ export class UploadService {
     folder?: string,
     categoryId?: number,
     entityName?: string,
+    options?: UploadOptions,
   ): Promise<{
     url: string;
     public_id: string;
@@ -49,6 +54,7 @@ export class UploadService {
     format?: string;
   }> {
     try {
+      const shouldApplyWatermark = !options?.skipWatermark;
       if (!process.env.PUBLIC_BASE_URL) {
         throw new InternalServerErrorException(
           'PUBLIC_BASE_URL is not configured',
@@ -79,8 +85,10 @@ export class UploadService {
         format = originalFormat;
       }
 
-      // Thêm watermark
-      processedBuffer = await this.addWatermark(processedBuffer);
+      // Thêm watermark nếu cần
+      if (shouldApplyWatermark) {
+        processedBuffer = await this.addWatermark(processedBuffer);
+      }
 
       const width = metadata.width;
       const height = metadata.height;

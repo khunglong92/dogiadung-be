@@ -37,6 +37,12 @@ class UploadImageResponse {
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
+  private shouldSkipWatermark(folder?: string): boolean {
+    if (!folder) return false;
+    const sanitized = folder.toLowerCase();
+    return sanitized.split('/').some((segment) => segment === 'quote');
+  }
+
   @Post('image')
   @ApiOperation({
     summary: 'Upload ảnh lên server (có đóng dấu logo)',
@@ -65,7 +71,16 @@ export class UploadController {
     if (possibleBuffer instanceof Buffer) {
       buffer = possibleBuffer;
     }
-    return this.uploadService.uploadImage(buffer, body.folder);
+    const skipWatermark = this.shouldSkipWatermark(body.folder);
+    return this.uploadService.uploadImage(
+      buffer,
+      body.folder,
+      undefined,
+      undefined,
+      {
+        skipWatermark,
+      },
+    );
   }
 
   @Delete('image')

@@ -13,6 +13,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { ContactInfoModule } from './contact-info/contact-info.module';
+import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ContactInfoModule } from './contact-info/contact-info.module';
     ProjectsModule,
     ContactsModule,
     ContactInfoModule,
+    QuotesModule,
   ],
   controllers: [AppController, ForceDeleteController],
   providers: [AppService],

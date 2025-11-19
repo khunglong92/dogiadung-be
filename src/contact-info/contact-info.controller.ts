@@ -40,7 +40,6 @@ export class ContactInfoController {
     status: 404,
     description: 'Chưa có thông tin liên hệ',
   })
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   async getContactInfo(): Promise<ContactInfo | null> {
     return this.contactInfoService.getContactInfo();
   }
