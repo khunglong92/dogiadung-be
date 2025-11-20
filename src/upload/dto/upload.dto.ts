@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export enum UploadFolder {
   PRODUCTS = 'products',
@@ -16,9 +16,5 @@ export class UploadDto {
   })
   @IsString()
   @IsOptional()
-  @Matches(/^(?!.*\.\.)[a-zA-Z0-9_/-]+$/, {
-    message:
-      'Folder name chỉ được chứa chữ cái, số, gạch ngang, gạch dưới, dấu / và không được chứa ".."',
-  })
   folder?: string;
 }
